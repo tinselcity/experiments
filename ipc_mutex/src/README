@@ -1,0 +1,19 @@
+--------------+
+ Compile with :
+--------------+-----------------------------------------------------------------
+->Reader
+gcc ipc_mutex.c -lrt -pthread -Wall -o ipc_mutex_reader
+->Write
+gcc ipc_mutex.c -lrt -pthread -Wall -DWRITER=1 -o ipc_mutex_writer
+
+
+----------+
+ Run with : 
+----------+--------------------------------------------------------------------- 
+->In one terminal (Writer)
+./ipc_mutex_writer
+
+->In another terminal (Reader)
+./ipc_mutex_reader
+
+
