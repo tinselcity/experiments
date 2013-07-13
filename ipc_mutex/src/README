@@ -3,7 +3,7 @@
 --------------+-----------------------------------------------------------------
 ->Reader
 gcc ipc_mutex.c -lrt -pthread -Wall -o ipc_mutex_reader
-->Write
+->Writer
 gcc ipc_mutex.c -lrt -pthread -Wall -DWRITER=1 -o ipc_mutex_writer
 
 
