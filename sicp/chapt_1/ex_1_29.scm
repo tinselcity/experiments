@@ -22,17 +22,17 @@
 (define (simpsons-integral f a b n)
     (define (inc x) (+ x 1))
     (define h (/ (- b a) n))
-	(define (term k)
-		(*
-			(cond
-				((or (= k 0) (= k n)) 1)
-				((even? k) 2)
-				(else 4)
-			)
-			;1
-			(f (+ a (* k h)))
-		)
-	)
+    (define (term k)
+        (*
+            (cond
+                ((or (= k 0) (= k n)) 1)
+                ((even? k) 2)
+                (else 4)
+            )
+            ;1
+            (f (+ a (* k h)))
+        )
+    )
     (/ (* h (sum term 0 inc n)) 3)
 )
 

@@ -18,11 +18,11 @@
 ;
 ; ------------------------------------------------------------------------------
 (define (pascal_rcsv row col)
-	(cond 
-		((or (= col 1) (= row col)) 1)
-		(else 
-			(+ (pascal_rcsv (- row 1) (- col 1)) (pascal_rcsv (- row 1) col))
-		)
-	)
+    (cond 
+        ((or (= col 1) (= row col)) 1)
+        (else 
+            (+ (pascal_rcsv (- row 1) (- col 1)) (pascal_rcsv (- row 1) col))
+        )
+    )
 )
 
