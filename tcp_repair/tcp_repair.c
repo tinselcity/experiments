@@ -68,9 +68,9 @@ int main(int argc, char **argv)
         // -------------------------------------------------
         // args
         // -------------------------------------------------
-        if (argc < 2)
+        if (argc < 3)
         {
-                fprintf(stderr, "usage: %s (port)\n", argv[0]);
+                fprintf(stderr, "usage: %s (port) (freeze)\n", argv[0]);
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -78,7 +78,11 @@ int main(int argc, char **argv)
         // -------------------------------------------------
         int l_port = 0;
         l_port = atoi(argv[1]);
-        printf("hello world\n");
+        // -------------------------------------------------
+        // get freeze...
+        // -------------------------------------------------
+        int l_freeze = 0;
+        l_freeze = atoi(argv[2]);
         // -------------------------------------------------
         // create server socket
         // -------------------------------------------------
@@ -170,17 +174,18 @@ int main(int argc, char **argv)
                         // ---------------------------------
                         // shut down...
                         // ---------------------------------
-                        tcp_repair_close(l_clnt_fd);
-                        l_clnt_fd = -1;
-                        break;
-                }
-                // -----------------------------------------
-                // read loop
-                // -----------------------------------------
-                if(l_clnt_fd >= 0)
-                {
-                        tcp_repair_close(l_clnt_fd);
-                        l_clnt_fd = -1;
+                        if(l_freeze)
+                        {
+                                tcp_repair_close(l_clnt_fd);
+                                l_clnt_fd = -1;
+                                break;
+                        }
+                        else
+                        {
+                                close(l_clnt_fd);
+                                l_clnt_fd = -1;
+                                break;
+                        }
                 }
         }
         // -------------------------------------------------
