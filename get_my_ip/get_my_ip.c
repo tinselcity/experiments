@@ -49,7 +49,7 @@ static int _get_source_address(struct sockaddr const *a_dst,
         l_fd = socket(a_dst->sa_family, SOCK_DGRAM, 0);
         if (l_fd == -1)
         {
-                printf("error performing socket. Reason: %s\n", strerror(errno));
+                printf(": error performing socket. Reason: %s\n", strerror(errno));
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -60,7 +60,7 @@ static int _get_source_address(struct sockaddr const *a_dst,
         l_s = connect(l_fd, a_dst, a_dst_len);
         if (l_s != 0)
         {
-                printf("error performing connect. Reason: %s\n", strerror(errno));
+                printf(": error performing connect. Reason: %s\n", strerror(errno));
                 if (l_fd) { close(l_fd); l_fd = -1; }
                 return STATUS_ERROR;
         }
@@ -70,7 +70,7 @@ static int _get_source_address(struct sockaddr const *a_dst,
         l_s = getsockname(l_fd, a_src, a_src_len);
         if (l_s != 0)
         {
-                printf("error performing getsockname. Reason: %s\n", strerror(errno));
+                printf(": error performing getsockname. Reason: %s\n", strerror(errno));
                 if (l_fd) { close(l_fd); l_fd = -1; }
                 return STATUS_ERROR;
         }
@@ -104,7 +104,7 @@ static int _get_public_address_v4(uint32_t *a_addr)
         l_s = inet_pton(AF_INET, "8.8.8.8", &l_sin.sin_addr);
         if (l_s != 1)
         {
-                printf("error performing inet_pton. Reason: %s\n", strerror(errno));
+                printf(": error performing inet_pton. Reason: %s\n", strerror(errno));
                 return STATUS_ERROR;
         }
         l_sin.sin_port = htons(53);
@@ -116,7 +116,7 @@ static int _get_public_address_v4(uint32_t *a_addr)
         l_s = _get_source_address(l_sa, l_salen, (struct sockaddr*) &l_sas, &l_sslen);
         if (l_s < 0)
         {
-                printf("error performing get_source_address\n");
+                printf(": error performing get_source_address\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -139,7 +139,7 @@ static int _get_public_address_v4(uint32_t *a_addr)
              (l_c_1 == 168))
             )
         {
-                printf("error ipv4 appears to be private address (RFC4193)\n");
+                printf(": warning ipv4 appears to be private address (RFC4193)\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -172,7 +172,7 @@ static int _get_public_address_v6(void *a_addr)
         l_s = inet_pton(AF_INET6, "2607:f8b0:4007:810::200e", &l_sin6.sin6_addr);
         if (l_s != 1)
         {
-                printf("error performing inet_pton. Reason: %s\n", strerror(errno));
+                printf(": error performing inet_pton. Reason: %s\n", strerror(errno));
                 return STATUS_ERROR;
         }
         l_sin6.sin6_port = htons(6969);
@@ -184,7 +184,7 @@ static int _get_public_address_v6(void *a_addr)
         l_s = _get_source_address(l_sa, l_salen, (struct sockaddr*) &l_sas, &l_sslen);
         if (l_s < 0)
         {
-                printf("error performing get_source_address\n");
+                printf(": error performing get_source_address\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -196,7 +196,7 @@ static int _get_public_address_v6(void *a_addr)
         uchar_t l_c_0 = l_c[0];
         if ((l_c_0 & 0xE0) != 0x20)
         {
-                printf("error ipv6 appears to be private address (RFC4193)\n");
+                printf(": warning ipv6 appears to be private address (RFC4193)\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -225,7 +225,7 @@ const char* get_public_address_v6_str(void)
         l_s = _get_public_address_v6(l_ipv6_addr_str);
         if (l_s != STATUS_OK)
         {
-                printf("error performing get_public_address\n");
+                printf(": error performing get_public_address\n");
                 return NULL;
         }
         // -------------------------------------------------
@@ -236,7 +236,7 @@ const char* get_public_address_v6_str(void)
         l_rs = inet_ntop(AF_INET6, l_ipv6_addr_str, s_ipv6_str, INET6_ADDRSTRLEN);
         if (l_rs == NULL)
         {
-                printf("error performing inet_ntop:  Reason: %s\n", strerror(errno));
+                printf(": error performing inet_ntop:  Reason: %s\n", strerror(errno));
                 return NULL;
         }
         printf(": ipv6: %s\n", s_ipv6_str);
@@ -250,6 +250,7 @@ const char* get_public_address_v6_str(void)
 int32_t display_public_address(void)
 {
         printf(": getting public ip address(es)\n");
+        printf(": trying IPv4...\n");
         // -------------------------------------------------
         // ipv4
         // -------------------------------------------------
@@ -258,7 +259,7 @@ int32_t display_public_address(void)
         l_s = _get_public_address_v4(&l_ipv4_addr);
         if (l_s != STATUS_OK)
         {
-                printf("error performing get_public_address\n");
+                printf(": warning: error performing get_public_address (IPv4)\n");
                 goto get_ipv6;
         }
         // -------------------------------------------------
@@ -270,11 +271,12 @@ int32_t display_public_address(void)
         l_rs = inet_ntop(AF_INET, &l_ipv4_addr, l_ipv4_str, INET_ADDRSTRLEN);
         if (l_rs == NULL)
         {
-                printf("error performing inet_ntop:  Reason: %s\n", strerror(errno));
+                printf(": error performing inet_ntop:  Reason: %s\n", strerror(errno));
                 goto get_ipv6;
         }
         printf(": ipv4: %s\n", l_ipv4_str);
-get_ipv6: ; // lol!?
+get_ipv6:
+        printf(": trying IPv6...\n");
         // -------------------------------------------------
         // ipv6
         // -------------------------------------------------
@@ -282,7 +284,7 @@ get_ipv6: ; // lol!?
         l_s = _get_public_address_v6(l_ipv6_addr_str);
         if (l_s != STATUS_OK)
         {
-                printf("error performing get_public_address\n");
+                printf(": warning: error performing get_public_address (IPv6)\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -293,7 +295,7 @@ get_ipv6: ; // lol!?
         l_rs = inet_ntop(AF_INET6, l_ipv6_addr_str, l_ipv6_str, INET6_ADDRSTRLEN);
         if (l_rs == NULL)
         {
-                printf("error performing inet_ntop:  Reason: %s\n", strerror(errno));
+                printf(": error performing inet_ntop:  Reason: %s\n", strerror(errno));
                 return STATUS_ERROR;
         }
         printf(": ipv6: %s\n", l_ipv6_str);
@@ -312,7 +314,7 @@ int main(void)
         l_s = display_public_address();
         if (l_s != STATUS_OK)
         {
-                printf("error performing display_public_address\n");
+                printf(": error performing display_public_address\n");
                 return STATUS_ERROR;
         }
         return 0;
