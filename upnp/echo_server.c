@@ -28,6 +28,7 @@
 //! ----------------------------------------------------------------------------
 int32_t echo_server(uint16_t a_port)
 {
+        NDBG_PRINT(": echoserver starting on port: %u\n", a_port);
         int listenfd;
         int connfd;
         uint32_t clientlen;

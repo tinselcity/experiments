@@ -83,6 +83,47 @@ int32_t upnp_setup(uint16_t a_port)
         NDBG_OUTPUT(": Local Address:                 %s\n", l_lan_addr);
         freeUPNPDevlist(l_dev);
         // -------------------------------------------------
+        // status info
+        // -------------------------------------------------
+        char l_upnp_stat_status[1024];
+        char l_upnp_stat_last_conn_err[1024];
+        uint32_t l_upnp_stat_uptime;
+        l_s = UPNP_GetStatusInfo(l_urls.controlURL,
+                                 l_datas.first.servicetype,
+                                 l_upnp_stat_status,
+                                 &l_upnp_stat_uptime,
+                                 l_upnp_stat_last_conn_err);
+        NDBG_OUTPUT(": UPNP_STAT: status:             %s\n", l_upnp_stat_status);
+        NDBG_OUTPUT(": UPNP_STAT: uptime:             %u\n", l_upnp_stat_uptime);
+        NDBG_OUTPUT(": UPNP_STAT: last_conn_err:      %s\n", l_upnp_stat_last_conn_err);
+        // -------------------------------------------------
+        // connection type
+        // -------------------------------------------------
+        char l_upnp_stat_conn_type[1024];
+        l_s = UPNP_GetConnectionTypeInfo(l_urls.controlURL,
+                                         l_datas.first.servicetype,
+                                         l_upnp_stat_conn_type);
+        NDBG_OUTPUT(": UPNP_STAT: conn_type_info:     %s\n", l_upnp_stat_status);
+        // -------------------------------------------------
+        // external IP address
+        // -------------------------------------------------
+        char l_upnp_stat_ext_ip[1024];
+        l_s = UPNP_GetExternalIPAddress(l_urls.controlURL,
+                                        l_datas.first.servicetype,
+                                        l_upnp_stat_ext_ip);
+        NDBG_OUTPUT(": UPNP_STAT: ext_ip_address:     %s\n", l_upnp_stat_ext_ip);
+        // -------------------------------------------------
+        // link layer max bitrates
+        // -------------------------------------------------
+        uint32_t l_upnp_stat_br_down;
+        uint32_t l_upnp_stat_br_up;
+        l_s = UPNP_GetLinkLayerMaxBitRates(l_urls.controlURL,
+                                           l_datas.first.servicetype,
+                                           &l_upnp_stat_br_down,
+                                           &l_upnp_stat_br_up);
+        NDBG_OUTPUT(": UPNP_STAT: bitrate_down:       %u\n", l_upnp_stat_br_down);
+        NDBG_OUTPUT(": UPNP_STAT: bitrate_up:         %u\n", l_upnp_stat_br_up);
+        // -------------------------------------------------
         // create port string
         // -------------------------------------------------
         char l_port_str[16];
@@ -130,15 +171,17 @@ int32_t upnp_setup(uint16_t a_port)
                 NDBG_PRINT("error performing UPNP_AddPortMapping (UDP). Reason[%d]: %s\n", errno, strerror(errno));
         }
         NDBG_OUTPUT(": UPNP_AddPortMapping(UDP): port[%u]: done...\n", a_port);
-#if 0
+#if 1
         // -------------------------------------------------
         // teardown
         // -------------------------------------------------
+        NDBG_OUTPUT(": UPNP_DeletePortMapping(TCP): port[%u]\n", a_port);
         l_s = UPNP_DeletePortMapping(l_urls.controlURL,
                                      l_datas.first.servicetype,
                                      l_port_str,
                                      "TCP",
                                      NULL);
+        NDBG_OUTPUT(": UPNP_DeletePortMapping(UDP): port[%u]\n", a_port);
         l_s = UPNP_DeletePortMapping(l_urls.controlURL,
                                      l_datas.first.servicetype,
                                      l_port_str,
@@ -175,6 +218,7 @@ int main(void)
         // -------------------------------------------------
         // display address/port
         // -------------------------------------------------
+#if 1
         if (memchr(l_ip_str, ':', sizeof(l_ip_str)) != NULL)
         {
                 NDBG_OUTPUT(": talk to me at\n:   [%s]:%u\n", l_ip_str, l_port);
@@ -183,14 +227,17 @@ int main(void)
         {
                 NDBG_OUTPUT(": talk to me at\n:   %s:%u\n", l_ip_str, l_port);
         }
+#endif
         // -------------------------------------------------
         // echo server
         // -------------------------------------------------
+#if 1
         l_s = echo_server(l_port);
         if (l_s != STATUS_OK)
         {
                 return STATUS_ERROR;
         }
+#endif
         // -------------------------------------------------
         // cleanup
         // -------------------------------------------------
