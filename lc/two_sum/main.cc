@@ -50,7 +50,7 @@ int main(void)
     // inputs
     // -----------------------------------------------------
     std::vector<int> l_input = {-3,4,3,90};
-    int l_target = 0;
+    int l_target = 7;
     std::vector<int> l_result;
     l_result = Solution::twoSum(l_input, l_target);
     printf("Result is: [");
