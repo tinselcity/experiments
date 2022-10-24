@@ -7,7 +7,7 @@
 
 | Name | Type  | Solve |
 | ---- | ---- | ----- |
-| Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](https://github.com/tinselcity/experiments/tree/master/lc/two_sum) |
+| Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/two_sum/main.cc) |
 | Array | [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | [TODO](TODO) |
 | Array | [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | [TODO](TODO) |
 | Array | [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | [TODO](TODO) |
@@ -79,7 +79,7 @@
 | Tree | [Lowest Common Ancestor of BST](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/) | [TODO](TODO) |
 | Tree | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree/) | [TODO](TODO) |
 | Tree | [Add and Search Word](https://leetcode.com/problems/add-and-search-word-data-structure-design/) | [TODO](TODO) |
-| Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [Done](https://github.com/tinselcity/experiments/tree/master/lc/word_search_ii) |
+| Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/word_search_ii/main.cc) |
 | Heap | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [TODO](TODO) |
 | Heap | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | [TODO](TODO) |
 | Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [TODO](TODO) |
