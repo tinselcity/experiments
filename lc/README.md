@@ -82,4 +82,4 @@
 | Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/word_search_ii/main.cc) |
 | Heap | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [TODO](TODO) |
 | Heap | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | [TODO](TODO) |
-| Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [TODO](TODO) |
+| Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/find_median_data_stream/main.cc) |
