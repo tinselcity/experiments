@@ -28,7 +28,7 @@
 | Dynamic Programming | [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) | [TODO](TODO) |
 | Dynamic Programming | [Word Break Problem](https://leetcode.com/problems/word-break/) | [TODO](TODO) |
 | Dynamic Programming | [Combination Sum](https://leetcode.com/problems/combination-sum-iv/) | [TODO](TODO) |
-| Dynamic Programming | [House Robber](https://leetcode.com/problems/house-robber/) | [TODO](TODO) |
+| Dynamic Programming | [House Robber](https://leetcode.com/problems/house-robber/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/house_robber/main.cc) |
 | Dynamic Programming | [House Robber II](https://leetcode.com/problems/house-robber-ii/) | [TODO](TODO) |
 | Dynamic Programming | [Decode Ways](https://leetcode.com/problems/decode-ways/) | [TODO](TODO) |
 | Dynamic Programming | [Unique Paths](https://leetcode.com/problems/unique-paths/) | [TODO](TODO) |
