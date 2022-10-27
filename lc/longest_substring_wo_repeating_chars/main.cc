@@ -19,19 +19,16 @@ public:
         }
         int l_cur_max_len=1;
         int l_max_len=1;
-        int j_start=0;
-        for(int i=1; s[i]; ++i)
+        int l_l_start=0;
+        for(int l_r_idx=1; s[l_r_idx]; ++l_r_idx)
         {
-            printf("INCR: s[%d](%c) ********** j_start[%d] < %d\n", i, s[i], j_start, i);
-            for(int j=j_start; j<i; ++j)
+            for(int l_l_idx=l_l_start; l_l_idx<l_r_idx; ++l_l_idx)
             {
-                printf("TEST: s[%d](%c) != s[%d](%c)\n", i, s[i], j, s[j]);
-                if(s[i] != s[j]) {
+                if(s[l_r_idx] != s[l_l_idx]) {
                     ++l_cur_max_len;
                 }
                 else {
-                    j_start = j+1;
-                    printf("SETJ: %d\n", j_start);
+                    l_l_start = l_l_idx+1;
                     break;
                 }
             }
@@ -55,12 +52,10 @@ int main(void)
     // inputs
     // -----------------------------------------------------
     _TEST("0abcabcbb");
-#if 0
     _TEST("bbbbb");
     _TEST("pwwkew");
     _TEST("a");
     _TEST(" ");
     _TEST("au");
-#endif
     return 0;
 }
