@@ -56,8 +56,8 @@
 | Matrix | [Spiral Matrix](https://leetcode.com/problems/spiral-matrix/) | [TODO](TODO) |
 | Matrix | [Rotate Image](https://leetcode.com/problems/rotate-image/) | [TODO](TODO) |
 | Matrix | [Word Search](https://leetcode.com/problems/word-search/) | [TODO](TODO) |
-| String | [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/) | [TODO](TODO) |
-| String | [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/longest_substring_wo_repeating_chars/main.cc) |
+| String | [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/longest_substring_wo_repeating_chars/main.cc) |
+| String | [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement/) | [TODO](TODO) |
 | String | [Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/) | [TODO](TODO) |
 | String | [Valid Anagram](https://leetcode.com/problems/valid-anagram/) | [TODO](TODO) |
 | String | [Group Anagrams](https://leetcode.com/problems/group-anagrams/) | [TODO](TODO) |
