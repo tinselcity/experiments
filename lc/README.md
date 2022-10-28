@@ -41,7 +41,7 @@
 | Graph | [Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) | [TODO](TODO) |
 | Graph | [Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree/) | [TODO](TODO) |
 | Graph | [Number of Connected Components in an Undirected Graph](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/) | [TODO](TODO) |
-| Interval | [Insert Interval](https://leetcode.com/problems/insert-interval/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/insert_interva/main.cc) |
+| Interval | [Insert Interval](https://leetcode.com/problems/insert-interval/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/insert_interval/main.cc) |
 | Interval | [Merge Intervals](https://leetcode.com/problems/merge-intervals/) | [TODO](TODO) |
 | Interval | [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals/) | [TODO](TODO) |
 | Interval | [Meeting Rooms](https://leetcode.com/problems/meeting-rooms/) | [TODO](TODO) |
