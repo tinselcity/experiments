@@ -43,8 +43,8 @@ void dfs_walk(TreeNode* a_node)
     {
         return;
     }
-    printf(": %d\n", a_node->val);
     dfs_walk(a_node->left);
+    printf(": %d\n", a_node->val);
     dfs_walk(a_node->right);
 }
 //! ----------------------------------------------------------------------------
@@ -125,11 +125,11 @@ TreeNode* bfs_construct(int_vec_t a_vec)
 //! ----------------------------------------------------------------------------
 //! test if is valid binary search tree
 //! ----------------------------------------------------------------------------
+TreeNode* g_prev = nullptr;
 class Solution {
 public:
     static bool isValidBST(TreeNode* root)
     {
-            static TreeNode* s_prev = nullptr;
             if (root == nullptr) {
                 return true;
             }
@@ -139,13 +139,13 @@ public:
                 return false;
             }
             // compare left with parent
-            if ((s_prev != nullptr) &&
-                root->val <= s_prev->val)
+            if ((g_prev != nullptr) &&
+                root->val <= g_prev->val)
             {
                 return false;
             }
             // set new previous
-            s_prev = root;
+            g_prev = root;
             // walk right
             return isValidBST(root->right);
     }
@@ -166,10 +166,11 @@ static void _test(int_vec_t l_vec)
     }
     printf("]\n");
     TreeNode* l_root = bfs_construct(l_vec);
+    g_prev = nullptr;
     bool l_s = Solution::isValidBST(l_root);
     printf(":: IS VALID: %s\n", l_s ? "TRUE": "FALSE");
-    //NDBG_PRINT(":: DFS ::\n");
-    //dfs_walk(l_root);
+    NDBG_PRINT(":: DFS ::\n");
+    dfs_walk(l_root);
     //NDBG_PRINT(":: BFS ::\n");
     //bfs_walk(l_root);
 }
@@ -177,9 +178,9 @@ static void _test(int_vec_t l_vec)
 //! main
 //! ----------------------------------------------------------------------------
 int main(void) {
-    //_test({2,1,3});
-    //_test({5,1,4,8,13,3,6});
-    //_test({5,3,8,1,4,6,13});
+    _test({2,1,3});
+    _test({5,1,4,8,13,3,6});
+    _test({5,3,8,1,4,6,13});
     _test({5,1,4,_NN,_NN,3,6});
     return 0;
 }
