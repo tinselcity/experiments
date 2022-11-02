@@ -18,7 +18,7 @@
 | Array | [3 Sum](https://leetcode.com/problems/3sum/) | [TODO](TODO) |
 | Array | [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) | [TODO](TODO) |
 | Binary | [Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/sum_two_integers/main.cc) |
-| Binary | [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) | [TODO](TODO) |
+| Binary | [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/number_of_1_bits/main.cc) |
 | Binary | [Counting Bits](https://leetcode.com/problems/counting-bits/) | [TODO](TODO) |
 | Binary | [Missing Number](https://leetcode.com/problems/missing-number/) | [TODO](TODO) |
 | Binary | [Reverse Bits](https://leetcode.com/problems/reverse-bits/) | [TODO](TODO) |
