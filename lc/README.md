@@ -49,7 +49,7 @@
 | Linked List | [Reverse a Linked List](https://leetcode.com/problems/reverse-linked-list/) | [TODO](TODO) |
 | Linked List | [Detect Cycle in a Linked List](https://leetcode.com/problems/linked-list-cycle/) | [TODO](TODO) |
 | Linked List | [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) | [TODO](TODO) |
-| Linked List | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [TODO](TODO) |
+| Linked List | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/merge_k_sorted_lists/main.cc) |
 | Linked List | [Remove Nth Node From End Of List](https://leetcode.com/problems/remove-nth-node-from-end-of-list/) | [TODO](TODO) |
 | Linked List | [Reorder List](https://leetcode.com/problems/reorder-list/) | [TODO](TODO) |
 | Matrix | [Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/) | [TODO](TODO) |
