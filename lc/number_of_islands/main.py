@@ -34,6 +34,7 @@ class Solution:
 					j = col + y
 					if j < 0 or j >= cols:
 						continue
+					# check if visited
 					if (i, j) in visit:
 						continue
 					if grid[i][j] == '1':
