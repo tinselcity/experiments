@@ -19,7 +19,7 @@
 | Array | [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) | [TODO](TODO) |
 | Binary | [Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) | [Done](/lc/sum_two_integers/main.cc) |
 | Binary | [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) | [Done](/lc/number_of_1_bits/main.cc) |
-| Binary | [Counting Bits](https://leetcode.com/problems/counting-bits/) | [TODO](TODO) |
+| Binary | [Counting Bits](https://leetcode.com/problems/counting-bits/) | [Done](/lc/counting_bits/main.cc) |
 | Binary | [Missing Number](https://leetcode.com/problems/missing-number/) | [TODO](TODO) |
 | Binary | [Reverse Bits](https://leetcode.com/problems/reverse-bits/) | [TODO](TODO) |
 | Dynamic Programming | [Climbing Stairs](https://leetcode.com/problems/climbing-stairs/) | [Done](/lc/climbing_stairs/main.cc) |
