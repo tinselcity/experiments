@@ -9,7 +9,7 @@
 | ---- | ---- | ----- |
 | Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/two_sum/main.cc) |
 | Array | [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | [Done](https://github.com/tinselcity/experiments/blob/master/lc/best_time_buy_sell_stock/main.cc) |
-| Array | [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | [Done](/contains_duplicate/main.cc) |
+| Array | [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | [Done](/lc/contains_duplicate/main.cc) |
 | Array | [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | [TODO](TODO) |
 | Array | [Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) | [TODO](TODO) |
 | Array | [Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/) | [TODO](TODO) |
