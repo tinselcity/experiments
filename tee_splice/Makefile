@@ -4,7 +4,8 @@
 CC = gcc
 #CC = clang
 TIDY = clang-tidy
-CFLAGS = -Werror -Wall -g -O2
+#CFLAGS = -Werror -Wall -g -O2
+CFLAGS = -O0 -ggdb -fsanitize=address
 INCLUDES = -I./
 LFLAGS = -L./
 LIBS = -lm

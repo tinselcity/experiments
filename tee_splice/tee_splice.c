@@ -24,6 +24,10 @@
 #ifndef TS_STATUS_ERROR
 #define TS_STATUS_ERROR -1
 #endif
+#ifndef TS_STATUS_DONE
+#define TS_STATUS_DONE -2
+#endif
+#define _BUF_SIZE (64*1024)
 //! ----------------------------------------------------------------------------
 //! ANSI Color Code Strings
 //! ----------------------------------------------------------------------------
@@ -83,6 +87,9 @@
                 fflush(stdout); \
         } while(0)
 #endif
+#ifndef UNUSED
+#define UNUSED(x) ( (void)(x) )
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -141,27 +148,62 @@ void _mem_display(const uint8_t* a_buf, size_t a_len)
         }
 }
 //! ----------------------------------------------------------------------------
-//! \details main
+//! client
+//! ----------------------------------------------------------------------------
+typedef struct {
+        int m_client_fd;
+        int m_proxy_fd;
+        int m_pipe_fd[2];
+} client_t;
+//! ----------------------------------------------------------------------------
+//! \details TODO
 //! \return  0 on success
 //!          -1 on error
-//! \param   argc/argv...
+//! \param   TODO
 //! ----------------------------------------------------------------------------
-int _handle_client(uint16_t a_port, int a_fd, int a_tee)
+int _setup_client(client_t* a_client, int a_client_fd)
 {
         int l_s;
-        int l_fd = -1;
-#define _BUF_SIZE (64*1024)
+        int l_flags;
+        a_client->m_client_fd = a_client_fd;
         // -------------------------------------------------
         // proxy socket
         // -------------------------------------------------
         errno = 0;
-        l_fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (l_fd < 0) {
+        a_client->m_proxy_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (a_client->m_proxy_fd < 0) {
                 NDBG_ABORT("Error performing socket. Reason: %s\n",
                            strerror(errno));
         }
         // -------------------------------------------------
-        // connect to upstream
+        // use pipe
+        // -------------------------------------------------
+        errno = 0;
+        l_s = pipe(a_client->m_pipe_fd);
+        if (l_s < 0) {
+                NDBG_ABORT("Error performing pipe. Reason: %s\n",
+                           strerror(errno));
+        }
+        // -------------------------------------------------
+        // SET_NONBLOCK
+        // -------------------------------------------------
+#define _SET_NONBLOCK(_fd) do { \
+                errno = 0; \
+                l_flags = fcntl(_fd, F_GETFL, 0); \
+                if (l_flags == -1) { \
+                        NDBG_ABORT("Error performing fcntl() Reason[%d]: %s\n", errno, strerror(errno)); \
+                } \
+                errno = 0; \
+                if (fcntl(_fd, F_SETFL, l_flags | O_NONBLOCK) < 0) { \
+                        NDBG_ABORT("Error performing fcntl() Reason[%d]: %s\n", errno, strerror(errno)); \
+                } \
+} while(0)
+        _SET_NONBLOCK(a_client->m_client_fd);
+        _SET_NONBLOCK(a_client->m_proxy_fd);
+        _SET_NONBLOCK(a_client->m_pipe_fd[0]);
+        _SET_NONBLOCK(a_client->m_pipe_fd[1]);
+        // -------------------------------------------------
+        // setup address
         // -------------------------------------------------
         struct sockaddr_storage l_sas;
         struct sockaddr_in* l_sa = (struct sockaddr_in*)(&l_sas);
@@ -170,22 +212,57 @@ int _handle_client(uint16_t a_port, int a_fd, int a_tee)
         //l_sa->sin_port = htons(a_port);
         l_sa->sin_addr.s_addr = inet_addr("74.6.143.26");
         l_sa->sin_port = htons(80);
-        l_s = connect(l_fd, (struct sockaddr*)(&(l_sas)), sizeof(struct sockaddr_in));
-        if (l_s < 0) {
-                NDBG_ABORT("Error performing connect. Reason: %s\n",
-                           strerror(errno));
+        // -------------------------------------------------
+        // connect
+        // -------------------------------------------------
+        while (1) {
+                errno = 0;
+                l_s = connect(a_client->m_proxy_fd, (struct sockaddr*)(&(l_sas)), sizeof(struct sockaddr_in));
+                if (l_s < 0) {
+                        if ((errno == EINPROGRESS) ||
+                            (errno == EALREADY) ||
+                            (errno == EAGAIN)) {
+                                usleep(1000);
+                                continue;
+                        }
+                        NDBG_ABORT("Error performing connect. Reason[%d]: %s\n",
+                                   errno, strerror(errno));
+                }
+                break;
         }
-        // -------------------------------------------------
-        // use pipe
-        // -------------------------------------------------
-        int l_pfd[2];
-        l_s = pipe(l_pfd);
-        if (l_s < 0) {
-                NDBG_ABORT("Error performing pipe. Reason: %s\n",
-                           strerror(errno));
+        return TS_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int _client_teardown(client_t* a_client, fd_set* a_rd_fdset, fd_set* a_wr_fdset)
+{
+        if (a_client->m_client_fd >= 0) {
+                FD_CLR(a_client->m_client_fd, a_rd_fdset);
+                FD_CLR(a_client->m_client_fd, a_wr_fdset);
+                close(a_client->m_client_fd);
+                a_client->m_client_fd = -1;
         }
+        if (a_client->m_proxy_fd >= 0) {
+                FD_CLR(a_client->m_proxy_fd, a_rd_fdset);
+                FD_CLR(a_client->m_proxy_fd, a_wr_fdset);
+                close(a_client->m_proxy_fd);
+                a_client->m_proxy_fd = -1;
+        }
+        return TS_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int _client_readable(client_t* a_client, int a_tee)
+{
+        int l_s;
         // -------------------------------------------------
-        // read client + write upstream
+        // read until EAGAIN or ERROR
         // -------------------------------------------------
         while(1) {
                 // -----------------------------------------
@@ -193,13 +270,19 @@ int _handle_client(uint16_t a_port, int a_fd, int a_tee)
                 // splice
                 // -----------------------------------------
                 errno = 0;
-                l_s = splice(a_fd, NULL, l_pfd[1], NULL, _BUF_SIZE, SPLICE_F_MOVE);
+                l_s = splice(a_client->m_client_fd,
+                             NULL, a_client->m_pipe_fd[1],
+                             NULL, _BUF_SIZE,
+                             SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
                 if (l_s < 0) {
+                        if (errno == EAGAIN) {
+                                break;
+                        }
                         NDBG_ABORT("Error performing splice[%d]. Reason[%d]: %s\n",
                                    l_s, errno, strerror(errno));
                 }
                 else if (l_s == 0) {
-                        break;
+                        return TS_STATUS_DONE;
                 }
                 // -----------------------------------------
                 // if tee...
@@ -209,38 +292,114 @@ int _handle_client(uint16_t a_port, int a_fd, int a_tee)
                         // tee to output
                         // ---------------------------------
                         errno = 0;
-                        l_s = tee(l_pfd[0], STDOUT_FILENO, _BUF_SIZE, 0);
+                        l_s = tee(a_client->m_pipe_fd[0],
+                                  STDOUT_FILENO,
+                                  _BUF_SIZE,
+                                  SPLICE_F_NONBLOCK);
                         if (l_s < 0) {
+                                if (errno == EAGAIN) {
+                                        break;
+                                }
                                 NDBG_ABORT("Error performing tee[%d]. Reason[%d]: %s\n",
                                            l_s, errno, strerror(errno));
                         }
                 }
+#if 1
                 // -----------------------------------------
                 // proxy->server
                 // splice
                 // -----------------------------------------
                 errno = 0;
-                l_s = splice(l_pfd[0], NULL, l_fd, NULL, _BUF_SIZE, SPLICE_F_MOVE);
+                l_s = splice(a_client->m_pipe_fd[0],
+                             NULL,
+                             a_client->m_proxy_fd,
+                             NULL,
+                             _BUF_SIZE,
+                             SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
                 if (l_s < 0) {
+                        if (errno == EAGAIN) {
+                                break;
+                        }
                         NDBG_ABORT("Error performing splice[%d]. Reason[%d]: %s\n",
                                    l_s, errno, strerror(errno));
                 }
                 else if (l_s == 0) {
-                        break;
+                        return TS_STATUS_DONE;
                 }
-#if 1
+#endif
+        }
+        return TS_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int _client_writeable(client_t* a_client, int a_tee)
+{
+#if 0
+        int l_s;
+        // -------------------------------------------------
+        // read upstream / write client
+        // -------------------------------------------------
+        while(1) {
+                // -----------------------------------------
+                // proxy->server
+                // splice
+                // -----------------------------------------
+                errno = 0;
+                l_s = splice(a_client->m_pipe_fd[0],
+                             NULL,
+                             a_client->m_client_fd,
+                             NULL,
+                             _BUF_SIZE,
+                             SPLICE_F_MOVE);
+                if (l_s < 0) {
+                        if (errno == EAGAIN) {
+                                break;
+                        }
+                        NDBG_ABORT("Error performing splice[%d]. Reason[%d]: %s\n",
+                                   l_s, errno, strerror(errno));
+                }
+                else if (l_s == 0) {
+                        return TS_STATUS_DONE;
+                }
+        }
+#endif
+        return TS_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int _proxy_readable(client_t* a_client, int a_tee)
+{
+        int l_s;
+        // -------------------------------------------------
+        // read until EAGAIN or ERROR
+        // -------------------------------------------------
+        while(1) {
                 // -----------------------------------------
                 // client->proxy
                 // splice
                 // -----------------------------------------
                 errno = 0;
-                l_s = splice(l_fd, NULL, l_pfd[1], NULL, _BUF_SIZE, SPLICE_F_MOVE);
+                l_s = splice(a_client->m_proxy_fd,
+                             NULL,
+                             a_client->m_pipe_fd[1],
+                             NULL,
+                             _BUF_SIZE,
+                             SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
                 if (l_s < 0) {
+                        if (errno == EAGAIN) {
+                                break;
+                        }
                         NDBG_ABORT("Error performing splice[%d]. Reason[%d]: %s\n",
                                    l_s, errno, strerror(errno));
                 }
                 else if (l_s == 0) {
-                        break;
+                        return TS_STATUS_DONE;
                 }
                 // -----------------------------------------
                 // if tee...
@@ -250,28 +409,80 @@ int _handle_client(uint16_t a_port, int a_fd, int a_tee)
                         // tee to output
                         // ---------------------------------
                         errno = 0;
-                        l_s = tee(l_pfd[0], STDOUT_FILENO, _BUF_SIZE, 0);
+                        l_s = tee(a_client->m_pipe_fd[0],
+                                  STDOUT_FILENO,
+                                  _BUF_SIZE,
+                                  SPLICE_F_NONBLOCK);
                         if (l_s < 0) {
+                                if (errno == EAGAIN) {
+                                        break;
+                                }
                                 NDBG_ABORT("Error performing tee[%d]. Reason[%d]: %s\n",
                                            l_s, errno, strerror(errno));
                         }
                 }
+#if 1
                 // -----------------------------------------
                 // proxy->server
                 // splice
                 // -----------------------------------------
                 errno = 0;
-                l_s = splice(l_pfd[0], NULL, a_fd, NULL, _BUF_SIZE, SPLICE_F_MOVE);
+                l_s = splice(a_client->m_pipe_fd[0],
+                             NULL,
+                             a_client->m_client_fd,
+                             NULL,
+                             _BUF_SIZE,
+                             SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
                 if (l_s < 0) {
+                        if (errno == EAGAIN) {
+                                break;
+                        }
                         NDBG_ABORT("Error performing splice[%d]. Reason[%d]: %s\n",
                                    l_s, errno, strerror(errno));
                 }
                 else if (l_s == 0) {
-                        break;
+                        return TS_STATUS_DONE;
                 }
 #endif
         }
-        close(l_fd);
+        return TS_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int _proxy_writeable(client_t* a_client, int a_tee)
+{
+#if 0
+        int l_s;
+        // -------------------------------------------------
+        // read upstream / write client
+        // -------------------------------------------------
+        while(1) {
+                // -----------------------------------------
+                // proxy->server
+                // splice
+                // -----------------------------------------
+                errno = 0;
+                l_s = splice(a_client->m_pipe_fd[0],
+                             NULL,
+                             a_client->m_proxy_fd,
+                             NULL,
+                             _BUF_SIZE,
+                             SPLICE_F_MOVE);
+                if (l_s < 0) {
+                        if (errno == EAGAIN) {
+                                break;
+                        }
+                        NDBG_ABORT("Error performing splice[%d]. Reason[%d]: %s\n",
+                                   l_s, errno, strerror(errno));
+                }
+                else if (l_s == 0) {
+                        return TS_STATUS_DONE;
+                }
+        }
+#endif
         return TS_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -340,7 +551,6 @@ int main(int argc, char** argv)
                         l_tee = 1;
                         break;
                 }
-
                 case '?': {
                         NDBG_ABORT("unrecognized argument.  Exiting.\n");
                 }
@@ -436,33 +646,138 @@ int main(int argc, char** argv)
         // listen max 64 backlog
         // -------------------------------------------------
         l_s = listen(l_listen_fd, 64);
+        if (l_s < 0) {
+                NDBG_ABORT("Error performing listen. Reason[%d]: %s\n",
+                           errno, strerror(errno));
+        }
+        // -------------------------------------------------
+        // read / write set
+        // -------------------------------------------------
+        fd_set l_rd_fdset;
+        fd_set l_wr_fdset;
+        FD_ZERO(&l_rd_fdset);
+        FD_ZERO(&l_wr_fdset);
+        FD_SET(l_listen_fd, &l_rd_fdset);
+        // -------------------------------------------------
+        // client
+        // -------------------------------------------------
+        client_t l_client;
+        l_client.m_proxy_fd = -1;
+        l_client.m_client_fd = -1;
+        l_client.m_pipe_fd[0] = -1;
+        l_client.m_pipe_fd[1] = -1;
         // -------------------------------------------------
         // accept loop
         // -------------------------------------------------
         struct sockaddr_in l_addr;
         socklen_t l_addr_len;
+        int l_max_fd = l_listen_fd;
         while (1) {
+                fd_set l_tmp_rd_fdset = l_rd_fdset;
+                fd_set l_tmp_wr_fdset = l_wr_fdset;
                 // ----------------------------------------
-                // accept
+                // select on fd
                 // ----------------------------------------
                 errno = 0;
-                l_s = accept(l_listen_fd, (struct sockaddr *) &l_addr, &l_addr_len);
-                if (l_s < 0)
-                {
-                        NDBG_ABORT("Error performing accept. Reason[%d]: %s\n",
-                                   errno, strerror(errno));
+                l_s = select(l_max_fd+1,
+                             &l_tmp_rd_fdset,
+                             &l_tmp_wr_fdset,
+                             NULL,
+                             NULL);
+                if (l_s < 0) {
+                        NDBG_ABORT("Error performing select[%d]. Reason[%d]: %s\n",
+                                   l_s, errno, strerror(errno));
                 }
-                int l_fd = l_s;
                 // ----------------------------------------
-                // client loop
+                // if is set
                 // ----------------------------------------
-                l_s = _handle_client(l_port, l_fd, l_tee);
-                if (l_s != TS_STATUS_OK)
-                {
-                        // do nothing
+                if(FD_ISSET(l_listen_fd, &l_tmp_rd_fdset)) {
+                        // ---------------------------------
+                        // accept
+                        // ---------------------------------
+                        errno = 0;
+                        l_s = accept4(l_listen_fd,
+                                      (struct sockaddr *)&l_addr,
+                                      &l_addr_len,
+                                      SOCK_NONBLOCK|SOCK_CLOEXEC);
+                        if (l_s < 0) {
+                                NDBG_ABORT("Error performing accept. Reason[%d]: %s\n",
+                                           errno, strerror(errno));
+                        }
+                        // ---------------------------------
+                        // Set the fd to no-delay mode
+                        // ---------------------------------
+                        int l_client_fd = l_s;
+                        // ---------------------------------
+                        // create client
+                        // ---------------------------------
+                        l_s = _setup_client(&l_client, l_client_fd);
+                        if (l_s != TS_STATUS_OK) {
+                                l_s = _client_teardown(&l_client, &l_rd_fdset, &l_wr_fdset);
+                                UNUSED(l_s);
+                                l_max_fd = l_listen_fd + 1;
+                                continue;
+                        }
+                        // ---------------------------------
+                        // set max fd
+                        // ---------------------------------
+                        if (l_client.m_client_fd > l_max_fd) {
+                                l_max_fd = l_client.m_client_fd;
+                        }
+                        if (l_client.m_proxy_fd > l_max_fd) {
+                                l_max_fd = l_client.m_proxy_fd;
+                        }
+                        // ---------------------------------
+                        // set flags
+                        // ---------------------------------
+                        FD_SET(l_client.m_client_fd, &l_rd_fdset);
+                        FD_SET(l_client.m_client_fd, &l_wr_fdset);
+                        FD_SET(l_client.m_proxy_fd, &l_rd_fdset);
+                        FD_SET(l_client.m_proxy_fd, &l_wr_fdset);
                 }
-                // Try again...
-                if (l_fd > 0 ) {close(l_fd); l_fd = -1;}
+#define _TEARDOWN_CHECK(_s) do { \
+                if (_s != TS_STATUS_OK) { \
+                        int _l_s = _client_teardown(&l_client, &l_rd_fdset, &l_wr_fdset); \
+                        UNUSED(_l_s); \
+                        l_max_fd = l_listen_fd + 1; \
+                        continue; \
+                } } while(0)
+                // ----------------------------------------
+                // client readable
+                // ----------------------------------------
+                if(FD_ISSET(l_client.m_client_fd, &l_tmp_rd_fdset)) {
+                        l_s = _client_readable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                        l_s = _proxy_writeable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                }
+                // ----------------------------------------
+                // client writeable
+                // ----------------------------------------
+                if(FD_ISSET(l_client.m_client_fd, &l_tmp_wr_fdset)) {
+                        l_s = _client_writeable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                        l_s = _proxy_readable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                }
+                // ----------------------------------------
+                // proxy readable
+                // ----------------------------------------
+                if(FD_ISSET(l_client.m_proxy_fd, &l_tmp_rd_fdset)) {
+                        l_s = _proxy_readable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                        l_s = _client_writeable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                }
+                // ----------------------------------------
+                // proxy writeable
+                // ----------------------------------------
+                if(FD_ISSET(l_client.m_proxy_fd, &l_tmp_wr_fdset)) {
+                        l_s = _proxy_writeable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                        l_s = _client_readable(&l_client, l_tee);
+                        _TEARDOWN_CHECK(l_s);
+                }
         }
         // -------------------------------------------------
         // cleanup
