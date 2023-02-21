@@ -82,8 +82,8 @@
         } while(0)
 #endif
 #ifndef NDBG_HEXDUMP
-#define NDBG_HEXDUMP(buffer, len) do { \
-                _mem_display((const uint8_t*)buffer, len); \
+#define NDBG_HEXDUMP(_buf, _len, _off) do { \
+                _mem_display((const uint8_t*)_buf, _len, _off); \
                 fflush(stdout); \
         } while(0)
 #endif
@@ -106,6 +106,7 @@ typedef struct {
         int m_client_fd;
         int m_proxy_fd;
         int m_pipe_fd[2];
+        int m_pipe_rd_fd[2];
         socks_state_t m_socks_state;
         struct sockaddr_storage m_proxy_sas;
         uint8_t m_client_connect_buf[18];
@@ -116,10 +117,11 @@ typedef struct {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-void _mem_display(const uint8_t* a_buf, size_t a_len)
+void _mem_display(const uint8_t* a_buf, size_t a_len, size_t a_off)
 {
 #define _LINE_SIZE 256
         char l_line[_LINE_SIZE+1] = "";
+        uint32_t l_off = a_off;
         uint32_t l_num_bytes = 0;
         char l_b_display[8] = "";
         char l_ascii[17] = "";
@@ -128,7 +130,7 @@ void _mem_display(const uint8_t* a_buf, size_t a_len)
                 snprintf(l_line,
                          _LINE_SIZE,
                          "%s0x%08x %s",
-                         ANSI_COLOR_FG_BLUE, l_num_bytes, ANSI_COLOR_OFF);
+                         ANSI_COLOR_FG_BLUE, l_off, ANSI_COLOR_OFF);
                 strncat(l_line, " ", _LINE_SIZE);
                 strncat(l_line, ANSI_COLOR_FG_GREEN, _LINE_SIZE);
                 while ((l_col < 16) &&
@@ -144,8 +146,9 @@ void _mem_display(const uint8_t* a_buf, size_t a_len)
                         else {
                                 l_ascii[l_col] = '.';
                         }
-                        l_col++;
-                        l_num_bytes++;
+                        ++l_col;
+                        ++l_num_bytes;
+                        ++l_off;
                         if (!(l_col % 4)) {
                                 strncat(l_line, " ", _LINE_SIZE);
                         }
@@ -205,10 +208,19 @@ int _setup_client(client_t* a_client, int a_client_fd)
         int l_flags;
         a_client->m_client_fd = a_client_fd;
         // -------------------------------------------------
-        // use pipe
+        // splice pipe
         // -------------------------------------------------
         errno = 0;
         l_s = pipe(a_client->m_pipe_fd);
+        if (l_s < 0) {
+                NDBG_ABORT("Error performing pipe. Reason: %s\n",
+                           strerror(errno));
+        }
+        // -------------------------------------------------
+        // read pipe
+        // -------------------------------------------------
+        errno = 0;
+        l_s = pipe(a_client->m_pipe_rd_fd);
         if (l_s < 0) {
                 NDBG_ABORT("Error performing pipe. Reason: %s\n",
                            strerror(errno));
@@ -230,36 +242,8 @@ int _setup_client(client_t* a_client, int a_client_fd)
         _SET_NONBLOCK(a_client->m_client_fd);
         _SET_NONBLOCK(a_client->m_pipe_fd[0]);
         _SET_NONBLOCK(a_client->m_pipe_fd[1]);
-#if 0
-        // -------------------------------------------------
-        // setup address
-        // -------------------------------------------------
-        struct sockaddr_storage l_sas;
-        struct sockaddr_in* l_sa = (struct sockaddr_in*)(&l_sas);
-        l_sa->sin_family = AF_INET;
-        //l_sa->sin_addr.s_addr = inet_addr("127.0.0.1");
-        //l_sa->sin_port = htons(a_port);
-        l_sa->sin_addr.s_addr = inet_addr("74.6.143.26");
-        l_sa->sin_port = htons(80);
-        // -------------------------------------------------
-        // connect
-        // -------------------------------------------------
-        while (1) {
-                errno = 0;
-                l_s = connect(a_client->m_proxy_fd, (struct sockaddr*)(&(l_sas)), sizeof(struct sockaddr_in));
-                if (l_s < 0) {
-                        if ((errno == EINPROGRESS) ||
-                            (errno == EALREADY) ||
-                            (errno == EAGAIN)) {
-                                usleep(1000);
-                                continue;
-                        }
-                        NDBG_ABORT("Error performing connect. Reason[%d]: %s\n",
-                                   errno, strerror(errno));
-                }
-                break;
-        }
-#endif
+        _SET_NONBLOCK(a_client->m_pipe_rd_fd[0]);
+        _SET_NONBLOCK(a_client->m_pipe_rd_fd[1]);
         return TS_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -301,7 +285,6 @@ static int _proxy_connect(client_t* a_client)
                            errno, strerror(errno));
         }
 #ifdef _BLOCKING_CONNECT
-        NDBG_PRINT("connected\n");
         break;
         }
 #endif
@@ -317,14 +300,10 @@ static int _proxy_connect(client_t* a_client)
         uint8_t l_buf[22];
         memcpy(l_buf, l_resp, 4);
         memcpy(l_buf+4, a_client->m_client_connect_buf, a_client->m_client_connect_buf_len);
-        NDBG_PRINT("WRITE BACK\n");
-        NDBG_HEXDUMP(l_buf, 4+a_client->m_client_connect_buf_len);
         l_s = send(a_client->m_client_fd, l_buf, 4+a_client->m_client_connect_buf_len, 0);
         if (l_s < 0) {
-                NDBG_PRINT("TS_STATUS_ERROR");
                 return TS_STATUS_ERROR;
         }
-        NDBG_PRINT("TS_STATUS_OK\n");
         return TS_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -334,9 +313,7 @@ static int _proxy_connect(client_t* a_client)
 //! ----------------------------------------------------------------------------
 static int _client_teardown(client_t* a_client, fd_set* a_rd_fdset, fd_set* a_wr_fdset)
 {
-        NDBG_PRINT("teardown\n");
         if (a_client->m_client_fd >= 0) {
-
                 if (a_rd_fdset) {
                         FD_CLR(a_client->m_client_fd, a_rd_fdset);
                 }
@@ -355,6 +332,20 @@ static int _client_teardown(client_t* a_client, fd_set* a_rd_fdset, fd_set* a_wr
                 }
                 close(a_client->m_proxy_fd);
                 a_client->m_proxy_fd = -1;
+        }
+        a_client->m_socks_state = SOCKS_STATE_NONE;
+        int i_p = 0;
+        for (i_p = 0; i_p < 2; ++i_p) {
+                if (a_client->m_pipe_fd[i_p] > 0) {
+                        close(a_client->m_pipe_fd[i_p]);
+                        a_client->m_pipe_fd[i_p] = -1;
+                }
+        }
+        for (i_p = 0; i_p < 2; ++i_p) {
+                if (a_client->m_pipe_rd_fd[i_p] > 0) {
+                        close(a_client->m_pipe_rd_fd[i_p]);
+                        a_client->m_pipe_rd_fd[i_p] = -1;
+                }
         }
         return TS_STATUS_OK;
 }
@@ -376,6 +367,7 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                 // splice
                 // -----------------------------------------
                 errno = 0;
+                NDBG_PRINT("...\n");
                 l_s = splice(a_client->m_client_fd,
                              NULL, a_client->m_pipe_fd[1],
                              NULL, _BUF_SIZE,
@@ -388,7 +380,6 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                                    l_s, errno, strerror(errno));
                 }
                 else if (l_s == 0) {
-                        NDBG_PRINT("TS_STATUS_DONE\n");
                         return TS_STATUS_DONE;
                 }
                 // -----------------------------------------
@@ -399,8 +390,9 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                         // tee to output
                         // ---------------------------------
                         errno = 0;
+                        NDBG_PRINT("...\n");
                         l_s = tee(a_client->m_pipe_fd[0],
-                                  STDOUT_FILENO,
+                                  a_client->m_pipe_rd_fd[1],
                                   _BUF_SIZE,
                                   SPLICE_F_NONBLOCK);
                         if (l_s < 0) {
@@ -410,12 +402,31 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                                 NDBG_ABORT("Error performing tee[%d]. Reason[%d]: %s\n",
                                            l_s, errno, strerror(errno));
                         }
+                        // ---------------------------------
+                        // read 16 bytes at a time
+                        // ---------------------------------
+                        NDBG_PRINT("...\n");
+                        do {
+                                NDBG_PRINT("...\n");
+                                uint8_t l_buf[16];
+                                size_t l_off = 0;
+                                NDBG_PRINT("...\n");
+                                l_s = read(a_client->m_pipe_rd_fd[0], l_buf, 16);
+                                NDBG_PRINT("...\n");
+                                if (l_s > 0) {
+                                        NDBG_PRINT("...\n");
+                                        NDBG_HEXDUMP(l_buf, l_s, l_off);
+                                        NDBG_PRINT("...\n");
+                                        l_off += l_s;
+                                }
+                        } while (l_s > 0);
+                        NDBG_PRINT("...\n");
                 }
                 // -----------------------------------------
                 // proxy->server
                 // splice
                 // -----------------------------------------
-                NDBG_PRINT("splice to proxy\n");
+                NDBG_PRINT("...\n");
                 errno = 0;
                 l_s = splice(a_client->m_pipe_fd[0],
                              NULL,
@@ -431,10 +442,10 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                                    l_s, errno, strerror(errno));
                 }
                 else if (l_s == 0) {
-                        NDBG_PRINT("TS_STATUS_DONE\n");
                         return TS_STATUS_DONE;
                 }
         }
+        NDBG_PRINT("...\n");
         return TS_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -447,8 +458,6 @@ static int _addr_to_sockaddr(struct sockaddr_storage* a_sas,
                              char* a_buf,
                              size_t a_len)
 {
-        NDBG_PRINT("TO SOCKADDR:\n");
-        NDBG_HEXDUMP(a_buf, a_len);
         // -------------------------------------------------
         // IPv4
         // -------------------------------------------------
@@ -466,11 +475,6 @@ static int _addr_to_sockaddr(struct sockaddr_storage* a_sas,
         else if (a_type == 0x04) {
                 uint16_t l_port;
                 memcpy(&l_port, a_buf+16, sizeof(l_port));
-                NDBG_PRINT("PORT:\n");
-                NDBG_HEXDUMP(a_buf+16, sizeof(l_port));
-                NDBG_PRINT("PORT:\n");
-                NDBG_HEXDUMP(&l_port, sizeof(l_port));
-                NDBG_PRINT("l_port = %u\n", htons(l_port));
                 struct sockaddr_in6* l_sin6 = (struct sockaddr_in6*)a_sas;
                 memcpy(&(l_sin6->sin6_addr), a_buf, 16);
                 l_sin6->sin6_port = l_port;
@@ -505,34 +509,24 @@ static int _client_readable(client_t* a_client,
                         l_s = recv(a_client->m_client_fd, l_buf, 256, 0);
                         if (l_s < 0) {
                                 if (errno == EAGAIN) {
-                                        NDBG_PRINT("EAGAIN\n");
                                         return TS_STATUS_OK;
                                 }
-                                NDBG_PRINT("TS_STATUS_ERROR\n");
                                 return TS_STATUS_ERROR;
                         }
                         // EOF
                         else if (l_s == 0) {
-                                NDBG_PRINT("TS_STATUS_DONE\n");
                                 return TS_STATUS_DONE;
                         }
-                        NDBG_PRINT("RECVD:\n");
-                        NDBG_HEXDUMP(l_buf, l_s);
                         uint8_t l_resp[2] = { 0x5, 0x0};
                         l_s = send(a_client->m_client_fd, l_resp, 2, 0);
-                        if (l_s < 0)
-                        {
-                                if (errno == EAGAIN)
-                                {
-                                        NDBG_PRINT("EAGAIN\n");
+                        if (l_s < 0) {
+                                if (errno == EAGAIN) {
                                         return TS_STATUS_OK;
                                 }
-                                NDBG_PRINT("TS_STATUS_ERROR\n");
                                 return TS_STATUS_ERROR;
                         }
                         // EOF
                         else if (l_s == 0) {
-                                NDBG_PRINT("TS_STATUS_DONE\n");
                                 return TS_STATUS_DONE;
                         }
                         a_client->m_socks_state = SOCKS_STATE_CLIENT_CONNECT;
@@ -564,27 +558,20 @@ static int _client_readable(client_t* a_client,
                         l_s = recv(a_client->m_client_fd, l_buf, 256, 0);
                         if (l_s < 0) {
                                 if (errno == EAGAIN) {
-                                        NDBG_PRINT("EAGAIN\n");
                                         return TS_STATUS_OK;
                                 }
-                                NDBG_PRINT("TS_STATUS_ERROR\n");
                                 return TS_STATUS_ERROR;
                         }
                         // EOF
                         else if (l_s == 0) {
-                                NDBG_PRINT("TS_STATUS_DONE\n");
                                 return TS_STATUS_DONE;
                         }
-                        else if (l_s < 4)
-                        {
-                                NDBG_PRINT("TS_STATUS_ERROR\n");
+                        else if (l_s < 4) {
                                 return TS_STATUS_ERROR;
                         }
                         // ---------------------------------
                         // copy in
                         // ---------------------------------
-                        NDBG_PRINT("client connect:\n");
-                        NDBG_HEXDUMP(l_buf, l_s);
                         size_t l_len = (l_s-4) > 18 ? 18 : (l_s-4);
                         memcpy(a_client->m_client_connect_buf, l_buf+4, l_len);
                         a_client->m_client_connect_buf_len = l_len;
@@ -593,10 +580,9 @@ static int _client_readable(client_t* a_client,
                         // ---------------------------------
                         l_s = _addr_to_sockaddr(&(a_client->m_proxy_sas),
                                                 (int)l_buf[3],
-                                                a_client->m_client_connect_buf,
+                                                (char*)a_client->m_client_connect_buf,
                                                 a_client->m_client_connect_buf_len);
                         if (l_s != TS_STATUS_OK) {
-                                NDBG_PRINT("TS_STATUS_ERROR\n");
                                 return TS_STATUS_ERROR;
                         }
                         // ---------------------------------
@@ -608,7 +594,6 @@ static int _client_readable(client_t* a_client,
                                 NDBG_ABORT("Error performing socket. Reason: %s\n",
                                            strerror(errno));
                         }
-                        NDBG_PRINT("a_client->m_proxy_fd: %d\n", a_client->m_proxy_fd);
                         // ---------------------------------
                         // set flags
                         // ---------------------------------
@@ -621,7 +606,6 @@ static int _client_readable(client_t* a_client,
                         a_client->m_socks_state = SOCKS_STATE_UPSTREAM_CONNECT;
                         l_s = _proxy_connect(a_client);
                         if (l_s != TS_STATUS_OK) {
-                                NDBG_PRINT("TS_STATUS_ERROR\n");
                                 return TS_STATUS_ERROR;
                         }
                         break;
@@ -638,7 +622,6 @@ static int _client_readable(client_t* a_client,
         // SOCKS_STATE_CLIENT_CONNECT
         // -------------------------------------------------
         case SOCKS_STATE_CONNECTED: {
-                NDBG_PRINT("SOCKS_STATE_CONNECTED\n");
                 return _client_socks_readable(a_client, a_tee);
         }
         // -------------------------------------------------
@@ -657,6 +640,7 @@ static int _client_readable(client_t* a_client,
 //! ----------------------------------------------------------------------------
 static int _proxy_socks_readable(client_t* a_client, int a_tee)
 {
+        NDBG_PRINT("...\n");
         int l_s;
         // -------------------------------------------------
         // read until EAGAIN or ERROR
@@ -692,7 +676,7 @@ static int _proxy_socks_readable(client_t* a_client, int a_tee)
                         // ---------------------------------
                         errno = 0;
                         l_s = tee(a_client->m_pipe_fd[0],
-                                  STDOUT_FILENO,
+                                  a_client->m_pipe_rd_fd[1],
                                   _BUF_SIZE,
                                   SPLICE_F_NONBLOCK);
                         if (l_s < 0) {
@@ -702,6 +686,18 @@ static int _proxy_socks_readable(client_t* a_client, int a_tee)
                                 NDBG_ABORT("Error performing tee[%d]. Reason[%d]: %s\n",
                                            l_s, errno, strerror(errno));
                         }
+                        // ---------------------------------
+                        // read 16 bytes at a time
+                        // ---------------------------------
+                        do {
+                                uint8_t l_buf[16];
+                                size_t l_off = 0;
+                                l_s = read(a_client->m_pipe_rd_fd[0], l_buf, 16);
+                                if (l_s > 0) {
+                                        NDBG_HEXDUMP(l_buf, l_s, l_off);
+                                        l_off += l_s;
+                                }
+                        } while (l_s > 0);
                 }
                 // -----------------------------------------
                 // proxy->server
@@ -734,8 +730,8 @@ static int _proxy_socks_readable(client_t* a_client, int a_tee)
 //! ----------------------------------------------------------------------------
 int _proxy_readable(client_t* a_client, int a_tee)
 {
-        int l_s;
         NDBG_PRINT("...\n");
+        int l_s;
         // -------------------------------------------------
         // for socks state...
         // -------------------------------------------------
@@ -746,7 +742,6 @@ int _proxy_readable(client_t* a_client, int a_tee)
         case SOCKS_STATE_UPSTREAM_CONNECT: {
                 l_s = _proxy_connect(a_client);
                 if (l_s != TS_STATUS_OK) {
-                        NDBG_PRINT("TS_STATUS_ERROR\n");
                         return TS_STATUS_ERROR;
                 }
                 break;
@@ -847,10 +842,11 @@ int main(int argc, char** argv)
             !l_port) {
                 NDBG_ABORT("listen port and proxy port must be specified.\n");
         }
+        int l_s;
         // -------------------------------------------------
         // if tee ensure stdout is pipe
         // -------------------------------------------------
-        int l_s;
+#if 0
         if (l_tee) {
                 struct stat l_stat;
                 errno = 0;
@@ -862,6 +858,7 @@ int main(int argc, char** argv)
                         NDBG_ABORT("error stdout must be a pipe\n");
                 }
         }
+#endif
         // -------------------------------------------------
         // socket
         // -------------------------------------------------
@@ -894,22 +891,26 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // no delay
         // -------------------------------------------------
+#if 0
         errno = 0;
         l_s = setsockopt(l_listen_fd, SOL_SOCKET, TCP_NODELAY, &l_val, sizeof(l_val));
         if (l_s < 0) {
                 NDBG_ABORT("Error setsockopt() Reason[%d]: %s\n",
                            errno, strerror(errno));
         }
+#endif
         // -------------------------------------------------
         // set zero copy
         // requires setcap ?
         // -------------------------------------------------
+#if 0
         errno = 0;
         l_s = setsockopt(l_listen_fd, SOL_SOCKET, SO_ZEROCOPY, &l_val, sizeof(l_val));
         if (l_s < 0) {
                 NDBG_ABORT("Error setsockopt() Reason[%d]: %s\n",
                            errno, strerror(errno));
         }
+#endif
         // -------------------------------------------------
         // bind listen on localhost <listen-port>
         // -------------------------------------------------
@@ -963,8 +964,6 @@ int main(int argc, char** argv)
                 if (l_client.m_proxy_fd > l_max_fd) {
                         l_max_fd = l_client.m_proxy_fd;
                 }
-                NDBG_PRINT("l_client.m_proxy_fd: %d\n", l_client.m_proxy_fd);
-                NDBG_PRINT("l_max_fd:            %d\n", l_max_fd);
                 // ----------------------------------------
                 // select on fd
                 // ----------------------------------------
@@ -1015,7 +1014,6 @@ int main(int argc, char** argv)
                 }
 #define _TEARDOWN_CHECK(_s) do { \
                 if (_s != TS_STATUS_OK) { \
-                        NDBG_PRINT("teardown\n"); \
                         int _l_s = _client_teardown(&l_client, &l_rd_fdset, NULL); \
                         UNUSED(_l_s); \
                         l_max_fd = l_listen_fd + 1; \
