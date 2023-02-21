@@ -10,11 +10,17 @@
 #include <getopt.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#define _USE_NCURSES 1
+#ifdef _USE_NCURSES
+#include <ncurses.h>
+#endif
 //! ----------------------------------------------------------------------------
 //! STATUS
 //! ----------------------------------------------------------------------------
@@ -113,6 +119,32 @@ typedef struct {
         size_t m_client_connect_buf_len;
 } client_t;
 //! ----------------------------------------------------------------------------
+//! globals
+//! ----------------------------------------------------------------------------
+#ifdef _USE_NCURSES
+int g_curses = 0;
+WINDOW *g_win_rqst = NULL;
+WINDOW *g_win_resp = NULL;
+int g_term_ws_row = 0;
+int g_term_ws_col = 0;
+int g_term_ws_changed = 0;
+#endif
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+#ifdef _USE_NCURSES
+void _handle_winch(int a_sig)
+{
+        struct winsize l_ws;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &l_ws);
+        g_term_ws_row = l_ws.ws_row;
+        g_term_ws_col = l_ws.ws_col;
+        g_term_ws_changed = 1;
+}
+#endif
+//! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
@@ -120,6 +152,7 @@ typedef struct {
 void _mem_display(const uint8_t* a_buf, size_t a_len, size_t a_off)
 {
 #define _LINE_SIZE 256
+        uint32_t l_line_num = a_off/16;
         char l_line[_LINE_SIZE+1] = "";
         uint32_t l_off = a_off;
         uint32_t l_num_bytes = 0;
@@ -169,8 +202,141 @@ void _mem_display(const uint8_t* a_buf, size_t a_len, size_t a_off)
                 strncat(l_line, " ", _LINE_SIZE);
                 strncat(l_line, l_ascii, _LINE_SIZE);
                 NDBG_OUTPUT("%s\n", l_line);
+                ++l_line_num;
         }
 }
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+#ifdef _USE_NCURSES
+void _clear_display_win(WINDOW* a_win)
+{
+        // -------------------------------------------------
+        // clear
+        // -------------------------------------------------
+        if (g_curses &&
+            a_win) {
+                werase(a_win);
+                box(a_win, 0, 0);
+                if (a_win == g_win_rqst) {
+                        wattron(a_win, COLOR_PAIR(5));
+                        box(a_win, 0, 0);
+                        wattron(a_win, WA_BOLD);
+                        mvwprintw(a_win, 0, 1, "Request");
+                        wattroff(a_win, WA_BOLD);
+                }
+                else {
+                        wattron(a_win, COLOR_PAIR(4));
+                        box(a_win, 0, 0);
+                        wattron(a_win, WA_BOLD);
+                        mvwprintw(a_win, 0, 1, "Response");
+                        wattroff(a_win, WA_BOLD);
+                }
+        }
+}
+#endif
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+#ifdef _USE_NCURSES
+void _mem_display_win(const uint8_t* a_buf, size_t a_len, size_t a_off, WINDOW* a_win)
+{
+#define _LINE_SIZE 256
+        uint32_t l_line_num = a_off/16;
+        char l_line[_LINE_SIZE+1] = "";
+        uint32_t l_off = a_off;
+        uint32_t l_num_bytes = 0;
+        char l_b_display[8] = "";
+        char l_ascii[17] = "";
+        while (l_num_bytes < a_len) {
+                uint32_t l_col = 0;
+                // -----------------------------------------
+                // display address
+                // -----------------------------------------
+                char l_addr[24];
+                snprintf(l_addr,
+                         24,
+                         "0x%08x ",
+                         l_off);
+                strncat(l_addr, " ", 23);
+                if (g_curses &&
+                    a_win) {
+                        if ((l_line_num+2) < g_term_ws_row) {
+                                wattron(a_win, WA_BOLD);
+                                wattron(a_win, COLOR_PAIR(1));
+                                mvwprintw(a_win, l_line_num+1, 1, "%s", l_addr);
+                                wattroff(a_win, WA_BOLD);
+                        }
+                }
+                else {
+                        NDBG_OUTPUT("%s", l_addr);
+                }
+                // -----------------------------------------
+                // display hex
+                // -----------------------------------------
+                while ((l_col < 16) &&
+                       (l_num_bytes < a_len)) {
+                        snprintf(l_b_display,
+                                 8,
+                                 "%02x",
+                                 (unsigned char) a_buf[l_num_bytes]);
+                        strncat(l_line, l_b_display, _LINE_SIZE);
+                        if (isprint(a_buf[l_num_bytes])) {
+                                l_ascii[l_col] = a_buf[l_num_bytes];
+                        }
+                        else {
+                                l_ascii[l_col] = '.';
+                        }
+                        ++l_col;
+                        ++l_num_bytes;
+                        ++l_off;
+                        if (!(l_col % 4)) {
+                                strncat(l_line, " ", _LINE_SIZE);
+                        }
+                }
+                // -----------------------------------------
+                // display ascii
+                // -----------------------------------------
+                if ((l_col < 16) &&
+                    (l_num_bytes >= a_len)) {
+                        while (l_col < 16) {
+                                strncat(l_line, "..", _LINE_SIZE);
+                                l_ascii[l_col] = '.';
+                                l_col++;
+                                if (!(l_col % 4)) {
+                                        strncat(l_line, " ", _LINE_SIZE);
+                                }
+                        }
+                }
+                l_ascii[l_col] = '\0';
+                if (g_curses &&
+                    a_win) {
+                        if ((l_line_num+2) < g_term_ws_row) {
+                                wattron(a_win, WA_BOLD);
+                                wattron(a_win, COLOR_PAIR(2));
+                                mvwprintw(a_win, l_line_num+1, 1+strlen(l_addr), "%s", l_line);
+                                wattroff(a_win, WA_BOLD);
+                                wattron(a_win, COLOR_PAIR(3));
+                                mvwprintw(a_win, l_line_num+1, 1+strlen(l_addr)+strlen(l_line), "%s", l_ascii);
+                        }
+                }
+                else {
+                        strncat(l_line, " ", _LINE_SIZE);
+                        strncat(l_line, l_ascii, _LINE_SIZE);
+                        NDBG_OUTPUT("%s\n", l_line);
+                }
+                ++l_line_num;
+        }
+        if (g_curses &&
+            a_win) {
+                wrefresh(a_win);
+        }
+}
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -356,7 +522,6 @@ static int _client_teardown(client_t* a_client, fd_set* a_rd_fdset, fd_set* a_wr
 //! ----------------------------------------------------------------------------
 static int _client_socks_readable(client_t* a_client, int a_tee)
 {
-        NDBG_PRINT("...\n");
         int l_s;
         // -------------------------------------------------
         // read until EAGAIN or ERROR
@@ -367,7 +532,6 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                 // splice
                 // -----------------------------------------
                 errno = 0;
-                NDBG_PRINT("...\n");
                 l_s = splice(a_client->m_client_fd,
                              NULL, a_client->m_pipe_fd[1],
                              NULL, _BUF_SIZE,
@@ -390,7 +554,6 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                         // tee to output
                         // ---------------------------------
                         errno = 0;
-                        NDBG_PRINT("...\n");
                         l_s = tee(a_client->m_pipe_fd[0],
                                   a_client->m_pipe_rd_fd[1],
                                   _BUF_SIZE,
@@ -405,28 +568,29 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                         // ---------------------------------
                         // read 16 bytes at a time
                         // ---------------------------------
-                        NDBG_PRINT("...\n");
+                        size_t l_off = 0;
                         do {
-                                NDBG_PRINT("...\n");
                                 uint8_t l_buf[16];
-                                size_t l_off = 0;
-                                NDBG_PRINT("...\n");
                                 l_s = read(a_client->m_pipe_rd_fd[0], l_buf, 16);
-                                NDBG_PRINT("...\n");
                                 if (l_s > 0) {
-                                        NDBG_PRINT("...\n");
+#ifdef _USE_NCURSES
+                                        if (g_curses) {
+                                                _mem_display_win((const uint8_t*)l_buf, (size_t)l_s, (size_t)l_off, g_win_rqst);
+                                        }
+                                        else {
+                                                NDBG_HEXDUMP(l_buf, l_s, l_off);
+                                        }
+#else
                                         NDBG_HEXDUMP(l_buf, l_s, l_off);
-                                        NDBG_PRINT("...\n");
+#endif
                                         l_off += l_s;
                                 }
                         } while (l_s > 0);
-                        NDBG_PRINT("...\n");
                 }
                 // -----------------------------------------
                 // proxy->server
                 // splice
                 // -----------------------------------------
-                NDBG_PRINT("...\n");
                 errno = 0;
                 l_s = splice(a_client->m_pipe_fd[0],
                              NULL,
@@ -445,7 +609,6 @@ static int _client_socks_readable(client_t* a_client, int a_tee)
                         return TS_STATUS_DONE;
                 }
         }
-        NDBG_PRINT("...\n");
         return TS_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -494,7 +657,6 @@ static int _client_readable(client_t* a_client,
                             fd_set* a_rd_fdset,
                             int a_tee)
 {
-        NDBG_PRINT("...\n");
         int l_s;
         // -------------------------------------------------
         // for socks state...
@@ -640,7 +802,6 @@ static int _client_readable(client_t* a_client,
 //! ----------------------------------------------------------------------------
 static int _proxy_socks_readable(client_t* a_client, int a_tee)
 {
-        NDBG_PRINT("...\n");
         int l_s;
         // -------------------------------------------------
         // read until EAGAIN or ERROR
@@ -689,12 +850,21 @@ static int _proxy_socks_readable(client_t* a_client, int a_tee)
                         // ---------------------------------
                         // read 16 bytes at a time
                         // ---------------------------------
+                        size_t l_off = 0;
                         do {
                                 uint8_t l_buf[16];
-                                size_t l_off = 0;
                                 l_s = read(a_client->m_pipe_rd_fd[0], l_buf, 16);
                                 if (l_s > 0) {
+#ifdef _USE_NCURSES
+                                        if (g_curses) {
+                                                _mem_display_win((const uint8_t*)l_buf, (size_t)l_s, (size_t)l_off, g_win_resp);
+                                        }
+                                        else {
+                                                NDBG_HEXDUMP(l_buf, l_s, l_off);
+                                        }
+#else
                                         NDBG_HEXDUMP(l_buf, l_s, l_off);
+#endif
                                         l_off += l_s;
                                 }
                         } while (l_s > 0);
@@ -730,7 +900,6 @@ static int _proxy_socks_readable(client_t* a_client, int a_tee)
 //! ----------------------------------------------------------------------------
 int _proxy_readable(client_t* a_client, int a_tee)
 {
-        NDBG_PRINT("...\n");
         int l_s;
         // -------------------------------------------------
         // for socks state...
@@ -774,6 +943,7 @@ void print_usage(FILE* a_stream, int a_exit_code)
         fprintf(a_stream, "  -l, --listen  port to listen on\n");
         fprintf(a_stream, "  -p, --proxy   port to proxy to\n");
         fprintf(a_stream, "  -t, --tee     tee to stdout\n");
+        fprintf(a_stream, "  -c, --curses  curses display\n");
         exit(a_exit_code);
 }
 //! ----------------------------------------------------------------------------
@@ -787,6 +957,7 @@ int main(int argc, char** argv)
         uint16_t l_listen = 0;
         uint16_t l_port = 0;
         int l_tee = 0;
+        int l_curses = 0;
         // -------------------------------------------------
         // arg defs
         // -------------------------------------------------
@@ -797,13 +968,14 @@ int main(int argc, char** argv)
                 { "listen", required_argument, 0, 'l' },
                 { "port",   required_argument, 0, 'p' },
                 { "tee",    no_argument,       0, 't' },
+                { "curses", no_argument,       0, 'c' },
                // Sentinel
                 { 0,        0,                 0,  0  }
         };
         // -------------------------------------------------
         // args...
         // -------------------------------------------------
-        const char l_short_arg_list[] = "hl:p:t";
+        const char l_short_arg_list[] = "hl:p:tc";
         while(((unsigned char)l_opt != 255)) {
                 l_opt = getopt_long_only(argc,
                                          argv,
@@ -827,6 +999,10 @@ int main(int argc, char** argv)
                         l_tee = 1;
                         break;
                 }
+                case 'c': {
+                        g_curses = 1;
+                        break;
+                }
                 case '?': {
                         NDBG_ABORT("unrecognized argument.  Exiting.\n");
                 }
@@ -842,6 +1018,49 @@ int main(int argc, char** argv)
             !l_port) {
                 NDBG_ABORT("listen port and proxy port must be specified.\n");
         }
+        // -------------------------------------------------
+        // curses view
+        // -------------------------------------------------
+#ifdef _USE_NCURSES
+        if (g_curses)
+        {
+                signal(SIGWINCH, _handle_winch);
+                initscr();
+                // -----------------------------------------
+                // colors
+                // -----------------------------------------
+                // TODO check for has colors?
+                //if (has_colors() == FALSE) { ... }
+                start_color();
+                init_pair(1, COLOR_BLUE, COLOR_BLACK);
+                init_pair(2, COLOR_GREEN, COLOR_BLACK);
+                init_pair(3, COLOR_WHITE, COLOR_BLACK);
+                init_pair(4, COLOR_YELLOW, COLOR_BLACK);
+                init_pair(5, COLOR_CYAN, COLOR_BLACK);
+                // -----------------------------------------
+                // windows
+                // -----------------------------------------
+                struct winsize l_ws;
+                ioctl(STDOUT_FILENO, TIOCGWINSZ, &l_ws);
+                g_term_ws_row = l_ws.ws_row;
+                g_term_ws_col = l_ws.ws_col;
+                // creating a window;
+                g_win_rqst = newwin(l_ws.ws_row, l_ws.ws_col/2, 0, 0);
+                g_win_resp = newwin(l_ws.ws_row, l_ws.ws_col/2, 0, l_ws.ws_col/2);
+                refresh();
+                // making box border with default border styles
+                wattron(g_win_rqst, COLOR_PAIR(5));
+                box(g_win_rqst, 0, 0);
+                wattron(g_win_resp, COLOR_PAIR(4));
+                box(g_win_resp, 0, 0);
+                // move and print in window
+                mvwprintw(g_win_rqst, 0, 1, "Request");
+                mvwprintw(g_win_resp, 0, 1, "Response");
+                // refreshing the window
+                wrefresh(g_win_rqst);
+                wrefresh(g_win_resp);
+        }
+#endif
         int l_s;
         // -------------------------------------------------
         // if tee ensure stdout is pipe
@@ -1011,6 +1230,15 @@ int main(int argc, char** argv)
                         // set flags
                         // ---------------------------------
                         FD_SET(l_client.m_client_fd, &l_rd_fdset);
+#ifdef _USE_NCURSES
+                        // ---------------------------------
+                        // clear windows
+                        // ---------------------------------
+                        if (g_curses) {
+                                _clear_display_win(g_win_rqst);
+                                _clear_display_win(g_win_resp);
+                        }
+#endif
                 }
 #define _TEARDOWN_CHECK(_s) do { \
                 if (_s != TS_STATUS_OK) { \
@@ -1038,5 +1266,12 @@ int main(int argc, char** argv)
         // cleanup
         // -------------------------------------------------
         if (l_listen_fd > 0) { close(l_listen_fd); l_listen_fd = -1; }
+#ifdef _USE_NCURSES
+        if (g_curses)
+        {
+                getch();
+                endwin();
+        }
+#endif
         return TS_STATUS_OK;
 }

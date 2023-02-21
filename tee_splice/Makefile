@@ -8,7 +8,7 @@ TIDY = clang-tidy
 CFLAGS = -O0 -ggdb -fsanitize=address
 INCLUDES = -I./
 LFLAGS = -L./
-LIBS = -lm
+LIBS = -lncurses
 SRCS = tee_splice.c
 OBJS = $(SRCS:.c=.o)
 MAIN = tee_splice
