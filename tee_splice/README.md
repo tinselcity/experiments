@@ -7,6 +7,8 @@ if [`SO_ZEROCOPY`](https://www.kernel.org/doc/html/v4.15/networking/msg_zerocopy
 
 In practive, however most proxies are using some form of "end-to-end" encryption, where client terminates to the proxy one way (in PKI using the proxy server certificate), and to the upstream server with another (using the upstream server certificate).
 
+![tee_splice_cut](https://user-images.githubusercontent.com/3515625/220281704-67f681ba-2128-45ab-830e-61a44745c14f.gif)
+
 #### References:
 
 - CloudFlare blog on attempt to use splice for optimizing away user space copying: [https://blog.cloudflare.com/sockmap-tcp-splicing-of-the-future/](https://blog.cloudflare.com/sockmap-tcp-splicing-of-the-future/)
