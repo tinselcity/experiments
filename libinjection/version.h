@@ -1,0 +1,1 @@
+#define LIBINJECTION_VERSION "3.9.2.60-8e70-dirty"
