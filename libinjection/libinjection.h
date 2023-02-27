@@ -38,6 +38,13 @@ LIBINJECTION_BEGIN_DECLS
  */
 const char* libinjection_version(void);
 
+/*
+ * Version info.
+ *
+ * return length of version string
+ */
+int libinjection_version_len(void);
+
 /**
  * Simple API for SQLi detection - returns a SQLi fingerprint or NULL
  * is benign input

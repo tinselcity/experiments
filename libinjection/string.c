@@ -1,6 +1,33 @@
 #include <stddef.h>
 
 void *
+memmove (void *dest, const void *src, size_t len)
+{
+  char *d = dest;
+  const char *s = src;
+  if (d < s)
+    while (len--)
+      *d++ = *s++;
+  else
+    {
+      const char *lasts = s + (len-1);
+      char *lastd = d + (len-1);
+      while (len--)
+        *lastd-- = *lasts--;
+    }
+  return dest;
+}
+
+void *
+memset (void *dest, register int val, register size_t len)
+{
+  unsigned char *ptr = dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
+}
+
+void *
 memchr (register const void *src_void, int c, size_t length)
 {
   const unsigned char *src = (const unsigned char *)src_void;
@@ -54,15 +81,6 @@ memcpy (void *out, const void *in, size_t length)
     return out;
 }
 
-void *
-memset (void *dest, register int val, register size_t len)
-{
-  register unsigned char *ptr = (unsigned char*)dest;
-  while (len-- > 0)
-    *ptr++ = val;
-  return dest;
-}
-
 size_t
 strnlen (const char *s, size_t maxlen)
 {
@@ -109,4 +127,3 @@ strncpy(char *dst, const char *src, size_t n)
         }
         return (dst);
 }
-

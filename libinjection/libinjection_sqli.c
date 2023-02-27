@@ -1210,6 +1210,11 @@ const char* libinjection_version(void)
     return LIBINJECTION_VERSION;
 }
 
+int libinjection_version_len(void)
+{
+    return strlen(LIBINJECTION_VERSION);
+}
+
 int libinjection_sqli_tokenize(struct libinjection_sqli_state *sf)
 {
     pt2Function fnptr;
@@ -2341,4 +2346,10 @@ strchr(const char *s, int c)
                 s++;
         }
         return (NULL);
+}
+
+// TODO REMOVE!!!
+int add(int a_val1, int a_val2)
+{
+  return a_val1 + a_val2;
 }
