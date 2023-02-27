@@ -25,7 +25,7 @@
 | Dynamic Programming | [Climbing Stairs](https://leetcode.com/problems/climbing-stairs/) | [Done](/lc/climbing_stairs.cc) |
 | Dynamic Programming | [Coin Change](https://leetcode.com/problems/coin-change/) | [TODO](TODO) |
 | Dynamic Programming | [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) | [TODO](TODO) |
-| Dynamic Programming | [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) | [/lc/longest_common_subsequence.cc](TODO) |
+| Dynamic Programming | [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) | [Done](/lc/longest_common_subsequence.cc) |
 | Dynamic Programming | [Word Break Problem](https://leetcode.com/problems/word-break/) | [Done](/lc/word_break.cc) |
 | Dynamic Programming | [Combination Sum](https://leetcode.com/problems/combination-sum-iv/) | [TODO](TODO) |
 | Dynamic Programming | [House Robber](https://leetcode.com/problems/house-robber/) | [Done](/lc/house_robber.cc) |
