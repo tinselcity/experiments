@@ -30,8 +30,8 @@
 | Dynamic Programming | [Combination Sum](https://leetcode.com/problems/combination-sum-iv/) | [TODO](TODO) |
 | Dynamic Programming | [House Robber](https://leetcode.com/problems/house-robber/) | [Done](/lc/house_robber.cc) |
 | Dynamic Programming | [House Robber II](https://leetcode.com/problems/house-robber-ii/) | [TODO](TODO) |
-| Dynamic Programming | [Decode Ways](https://leetcode.com/problems/decode-ways/) | [TODO](TODO) |
-| Dynamic Programming | [Unique Paths](https://leetcode.com/problems/unique-paths/) | [TODO](TODO) |
+| Dynamic Programming | [Decode Ways](https://leetcode.com/problems/decode-ways/) | [Done](/lc/decode_ways.cc) |
+| Dynamic Programming | [Unique Paths](https://leetcode.com/problems/unique-paths/) | [Done](/lc/unique_paths.cc) |
 | Dynamic Programming | [Jump Game](https://leetcode.com/problems/jump-game/) | [TODO](TODO) |
 | Graph | [Clone Graph](https://leetcode.com/problems/clone-graph/) | [Done](/lc/clone_graph.cc) |
 | Graph | [Course Schedule](https://leetcode.com/problems/course-schedule/) | [TODO](TODO) |
