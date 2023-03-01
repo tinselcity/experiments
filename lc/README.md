@@ -38,7 +38,7 @@
 | Graph | [Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) | [Done](/lc/course_schedule_ii.cc) |
 | Graph | [Pacific Atlantic Water Flow](https://leetcode.com/problems/pacific-atlantic-water-flow/) | [TODO](TODO) |
 | Graph | [Number of Islands](https://leetcode.com/problems/number-of-islands/) | [TODO](TODO) |
-| Graph | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/) | [TODO](TODO) |
+| Graph | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/) | [Done](/lc/longest_consecutive_sequence.cc) |
 | Graph | [Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) | [TODO](TODO) |
 | Graph | [Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree/) | [TODO](TODO) |
 | Graph | [Number of Connected Components in an Undirected Graph](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/) | [TODO](TODO) |
