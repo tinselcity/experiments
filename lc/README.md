@@ -27,14 +27,15 @@
 | Dynamic Programming | [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) | [TODO](TODO) |
 | Dynamic Programming | [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) | [Done](/lc/longest_common_subsequence.cc) |
 | Dynamic Programming | [Word Break Problem](https://leetcode.com/problems/word-break/) | [Done](/lc/word_break.cc) |
-| Dynamic Programming | [Combination Sum](https://leetcode.com/problems/combination-sum-iv/) | [TODO](TODO) |
+| Dynamic Programming | [Combination Sum IV](https://leetcode.com/problems/combination-sum-iv/) | [TODO](TODO) |
 | Dynamic Programming | [House Robber](https://leetcode.com/problems/house-robber/) | [Done](/lc/house_robber.cc) |
 | Dynamic Programming | [House Robber II](https://leetcode.com/problems/house-robber-ii/) | [TODO](TODO) |
 | Dynamic Programming | [Decode Ways](https://leetcode.com/problems/decode-ways/) | [Done](/lc/decode_ways.cc) |
 | Dynamic Programming | [Unique Paths](https://leetcode.com/problems/unique-paths/) | [Done](/lc/unique_paths.cc) |
 | Dynamic Programming | [Jump Game](https://leetcode.com/problems/jump-game/) | [TODO](TODO) |
 | Graph | [Clone Graph](https://leetcode.com/problems/clone-graph/) | [Done](/lc/clone_graph.cc) |
-| Graph | [Course Schedule](https://leetcode.com/problems/course-schedule/) | [TODO](TODO) |
+| Graph | [Course Schedule](https://leetcode.com/problems/course-schedule/) | [Done](/lc/course_schedule.cc) |
+| Graph | [Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) | [Done](/lc/course_schedule_ii.cc) |
 | Graph | [Pacific Atlantic Water Flow](https://leetcode.com/problems/pacific-atlantic-water-flow/) | [TODO](TODO) |
 | Graph | [Number of Islands](https://leetcode.com/problems/number-of-islands/) | [TODO](TODO) |
 | Graph | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/) | [TODO](TODO) |
