@@ -3,5 +3,5 @@
 .cproject
 .settings/
 carp/uris.lst
-
+.vscode
 /Debug/
