@@ -74,6 +74,27 @@ void bfs_walk(TreeNode* a_node)
     }
 }
 //! ----------------------------------------------------------------------------
+//! breadth first tree walk (not search)
+//! ----------------------------------------------------------------------------
+void bfs_walk_recursive(p_list_t& a_q, int a_level)
+{
+    if (a_q.empty()) {
+        return;
+    }
+    TreeNode* l_node = a_q.front();
+    a_q.pop_front();
+    printf(": LEVEL[%d] VALUE: %d\n", a_level, l_node->val);
+    if (l_node->left != nullptr)
+    {
+        a_q.push_back(l_node->left);
+    }
+    if (l_node->right != nullptr)
+    {
+        a_q.push_back(l_node->right);
+    }
+    return bfs_walk_recursive(a_q, a_level+1);
+}
+//! ----------------------------------------------------------------------------
 //! breadth first construction
 //! ----------------------------------------------------------------------------
 TreeNode* bfs_construct(int_vec_t a_vec)
@@ -171,8 +192,12 @@ static void _test(int_vec_t l_vec)
     printf(":: IS VALID: %s\n", l_s ? "TRUE": "FALSE");
     NDBG_PRINT(":: DFS ::\n");
     dfs_walk(l_root);
-    //NDBG_PRINT(":: BFS ::\n");
-    //bfs_walk(l_root);
+    NDBG_PRINT(":: BFS ::\n");
+    bfs_walk(l_root);
+    NDBG_PRINT(":: BFS RECURSIVE::\n");
+    p_list_t l_p_list;
+    l_p_list.push_back(l_root);
+    bfs_walk_recursive(l_p_list, 0);
 }
 //! ----------------------------------------------------------------------------
 //! main
