@@ -42,25 +42,22 @@ int mmap_file(const char* file, char** buf, size_t& buf_len) {
 }
 
 struct jshandler {
-
   jshandler(void):
     balance_flag(false),
     num_cust(0.0),
     avg_balance(0.0)
   {}
-
+  // std rapidjson handler callbacks
   bool Null() { return true; }
   bool Bool(bool b) { return true; }
+  bool Int(int i) { avg_more((int)i); return true; }
+  bool Uint(unsigned u) { avg_more((int)u); return true; }
   bool Int64(int64_t i) { return true; }
   bool Uint64(uint64_t u) { return true; }
   bool Double(double d) { return true; }
   bool RawNumber(const char* str, rapidjson::SizeType length, bool copy) { return true; }
   bool String(const char* str, rapidjson::SizeType length, bool copy) { return true; }
   bool StartObject() { return true; }
-  bool EndObject(rapidjson::SizeType memberCount) { return true; }
-  bool StartArray() { return true; }
-  bool EndArray(rapidjson::SizeType elementCount) { return true; }
-
   // mapping key balance -> avg calculation
   bool Key(const char* str, rapidjson::SizeType length, bool copy) {
     if (std::string(str, length) == "balance") {
@@ -68,21 +65,20 @@ struct jshandler {
     }
     return true;
   }
-  bool Int(int i) { avg_more((int)i); return true; }
-  bool Uint(unsigned u) { avg_more((int)u); return true; }
-
+  bool EndObject(rapidjson::SizeType memberCount) { return true; }
+  bool StartArray() { return true; }
+  bool EndArray(rapidjson::SizeType elementCount) { return true; }
+  // recalc mean and unset balance flag
   void avg_more(int val) {
     ++num_cust;
     double balance = (double)(val);
     avg_balance = avg_balance + ((balance - avg_balance) / num_cust);
     balance_flag = false;
   }
-
   // next value is balance
   bool balance_flag;
   double num_cust;
   double avg_balance;
-
 };
 
 int main(int argc, char **argv) {
@@ -91,9 +87,9 @@ int main(int argc, char **argv) {
   if (mmap_file(argv[1], &buf, buf_len) != 0) {
     return -1;
   }
+  rapidjson::StringStream ss(buf);
   jshandler handler;
   rapidjson::Reader reader;
-  rapidjson::StringStream ss(buf);
   rapidjson::ParseResult ok = reader.Parse(ss, handler);
   if (!ok) {
     FATAL("error parsing json. Reason[%d]: %s\n", (int)ok.Offset(), rapidjson::GetParseError_En(ok.Code()));
