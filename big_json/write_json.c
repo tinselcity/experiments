@@ -10,14 +10,11 @@
 static char *rand_string(char *str, size_t size)
 {
   const char charset[] = "abcdefghijklmnopqrstuvwxyz";
-  if (size) {
-    --size;
-    for (size_t n = 0; n < size; n++) {
-      int key = rand() % (int) (sizeof charset - 1);
-      str[n] = charset[key];
-    }
-    str[size] = '\0';
+  for (size_t n = 0; n < size-1; n++) {
+    int key = rand() % (int) (sizeof(charset) - 1);
+    str[n] = charset[key];
   }
+  str[size-1] = '\0';
   return str;
 }
 
@@ -28,15 +25,15 @@ int main(int argc, char **argv) {
   }
   unsigned long num = strtoul(argv[2], NULL, 10);
   fwrite("{ \"customers\": [", strlen("{ \"customers\": ["), 1, fp);
-  // "balance": rand -10,000 -> 1,0000,0000
 #define _BALANCE_MIN -10000
 #define _BALANCE_MAX 1000000
-  char name[17] = {'\0'};
+  char name[17];
   srand(time(NULL));
   for (unsigned long i = 0; i < num; ++i) {
     int balance = _BALANCE_MIN +
                   rand() / (RAND_MAX / (_BALANCE_MAX - _BALANCE_MIN + 1) + 1);
-    fprintf(fp, "{\"name\": \"%s\", \"balance\": %d}", rand_string(name, 16), balance);
+    fprintf(fp, "{\"name\": \"%s\", \"balance\": %d}",
+            rand_string(name, sizeof(name)), balance);
     if (i+1 < num) {
       fprintf(fp, ",");
     }
@@ -45,3 +42,4 @@ int main(int argc, char **argv) {
   fclose(fp);
   return 0;
 }
+

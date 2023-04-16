@@ -1,23 +1,19 @@
 CC = gcc
 CXX = g++
-CFLAGS = -Werror -Wall -g -O3 -m64 
+CFLAGS = -Werror -Wall -g -O3 -m64
 #CFLAGS = -O0 -ggdb -fsanitize=address
-INCLUDES = -I./
-LFLAGS = -L./
-LIBS = /usr/local/lib/libsimdjson.a
 OBJS = $(SRCS:.c=.o)
 
-all: write_json read_json
+all: write_json read_json read_json_stream
 
 write_json: write_json.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(LFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@
 
 read_json: read_json.cc
-	$(CXX) $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $^ -o $@ $(LIBS) 
-
+	$(CXX) $(CFLAGS) $^ -o $@
 
 read_json_stream: read_json_stream.cc
-	$(CXX) $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $^ -o $@ $(LIBS) 
+	$(CXX) $(CFLAGS) $^ -o $@
 
 clean:
 	$(RM) *.o *~ write_json read_json
