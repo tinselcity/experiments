@@ -23,13 +23,14 @@ int main(int argc, char **argv) {
   double num_cust = 0;
   double avg_balance = 0.0;
   for (auto && obj : js.GetObject()){
-    if (std::string(obj.name.GetString()) != "customers") { continue;}
-    for (auto && cust : obj.value.GetArray()) {
-      for (auto && prop : cust.GetObject()) {
-        if (std::string(prop.name.GetString()) == "balance") {
-          ++num_cust;
-          double balance = (double)(prop.value.GetInt());
-          avg_balance = avg_balance + ((balance - avg_balance) / num_cust);
+    if (std::string(obj.name.GetString()) == "customers") {
+      for (auto && cust : obj.value.GetArray()) {
+        for (auto && prop : cust.GetObject()) {
+          if (std::string(prop.name.GetString()) == "balance") {
+            ++num_cust;
+            double balance = (double)(prop.value.GetInt());
+            avg_balance = avg_balance + ((balance - avg_balance) / num_cust);
+          }
         }
       }
     }
