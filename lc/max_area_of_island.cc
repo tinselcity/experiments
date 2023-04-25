@@ -5,8 +5,8 @@ using namespace std;
 class Solution {
 public:
   static int dfs(vector<vector<int>>& grid,
-                 size_t r,
-                 size_t c)
+                 int r,
+                 int c)
   {
     // check if:
     //  -out of bounds
@@ -34,8 +34,8 @@ public:
         return 0;
     }
     int max = 0;
-    for (size_t r = 0; r < grid.size(); ++r) {
-        for (size_t c = 0; c < grid[0].size(); ++c) {
+    for (int r = 0; r < grid.size(); ++r) {
+        for (int c = 0; c < grid[0].size(); ++c) {
             int s = dfs(grid, r, c);
             if (s > max) {
                 max = s;
