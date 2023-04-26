@@ -16,7 +16,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <liburing.h>
-#include "ndebug.h"
 #include "ext/http-parser/http_parser.h"
 #include "mime.h"
 #include "date.h"
@@ -26,6 +25,32 @@
 #define _DEFAULT_PORT (12345)
 #define _MAX_PENDING (1024)
 #define _IO_URING_QUEUE_DEPTH (2048)
+//! ----------------------------------------------------------------------------
+//! status
+//! ----------------------------------------------------------------------------
+#ifndef STATUS_OK
+#define STATUS_OK 0
+#endif
+#ifndef STATUS_ERROR
+#define STATUS_ERROR 0
+#endif
+//! ----------------------------------------------------------------------------
+//! macros
+//! ----------------------------------------------------------------------------
+#define FATAL(...) do { \
+  fprintf(stderr, "%s:%s.%d: ", __FILE__, __FUNCTION__, __LINE__); \
+  fprintf(stderr, __VA_ARGS__); \
+  return STATUS_ERROR; \
+  } while(0)
+#define ERROR(...) do { \
+  fprintf(stderr, "%s:%s.%d: ", __FILE__, __FUNCTION__, __LINE__); \
+  fprintf(stderr, __VA_ARGS__); \
+  } while(0)
+#define TRACE(...) do { \
+  if (s_debug) { \
+    fprintf(stdout, "%s:%s.%d: ", __FILE__, __FUNCTION__, __LINE__); \
+    fprintf(stdout, __VA_ARGS__); \
+} } while(0)
 //! ----------------------------------------------------------------------------
 //! types
 //! ----------------------------------------------------------------------------
@@ -45,6 +70,7 @@ typedef struct {
   off_t resp_off;
   int file_fd;
   size_t file_size;
+  int pipe_fd[2];
 } hgx_conn_t;
 // ---------------------------------------------------------
 // hignx io uring io types
@@ -55,6 +81,7 @@ typedef enum hgx_io_type {
   HGX_IO_TYPE_STATX,
   HGX_IO_TYPE_READ,
   HGX_IO_TYPE_SEND,
+  HGX_IO_TYPE_SPLICE,
   HGX_IO_TYPE_CLOSE
 } hgx_io_type_t;
 // ---------------------------------------------------------
@@ -104,12 +131,22 @@ typedef struct hgx_io_send {
   hgx_conn_t* conn;
 } hgx_io_send_t;
 // ---------------------------------------------------------
+// read
+// ---------------------------------------------------------
+typedef struct hgx_io_splice {
+  hgx_io_t io;
+  hgx_conn_t* conn;
+} hgx_io_splice_t;
+// ---------------------------------------------------------
 // close
 // ---------------------------------------------------------
 typedef struct hgx_io_close {
   hgx_io_t io;
-  hgx_conn_t* conn;
 } hgx_io_close_t;
+//! ----------------------------------------------------------------------------
+//! static globals
+//! ----------------------------------------------------------------------------
+int s_debug = 0;
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -132,6 +169,17 @@ static hgx_io_open_t* _new_io_open(hgx_conn_t* conn) {
   ptr->io.type = HGX_IO_TYPE_OPEN;
   ptr->io.fd = conn->fd;
   ptr->conn = conn;
+  return ptr;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static hgx_io_close_t* _new_io_close(hgx_conn_t* conn) {
+  hgx_io_close_t* ptr = (hgx_io_close_t*)calloc(sizeof(hgx_io_close_t), 1);
+  ptr->io.type = HGX_IO_TYPE_CLOSE;
+  ptr->io.fd = conn->fd;
   return ptr;
 }
 //! ----------------------------------------------------------------------------
@@ -177,9 +225,9 @@ static hgx_io_send_t* _new_io_send(hgx_conn_t* conn) {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static hgx_io_close_t* _new_io_close(hgx_conn_t* conn) {
-  hgx_io_close_t* ptr = (hgx_io_close_t*)calloc(sizeof(hgx_io_close_t), 1);
-  ptr->io.type = HGX_IO_TYPE_CLOSE;
+static hgx_io_splice_t* _new_io_splice(hgx_conn_t* conn) {
+  hgx_io_splice_t* ptr = (hgx_io_splice_t*)calloc(sizeof(hgx_io_splice_t), 1);
+  ptr->io.type = HGX_IO_TYPE_SPLICE;
   ptr->io.fd = conn->fd;
   ptr->conn = conn;
   return ptr;
@@ -217,7 +265,12 @@ static void _reset_conn(hgx_conn_t* conn) {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static void _delete_conn(hgx_conn_t* conn) {
+static void _shutdown_conn(struct io_uring* ring, hgx_conn_t* conn) {
+  hgx_io_close_t* io_close = _new_io_close(conn);
+  struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+  io_uring_prep_close(sqe, io_close->io.fd);
+  io_uring_sqe_set_data(sqe, io_close);
+  io_uring_submit(ring);
   free(conn);
 }
 //! ----------------------------------------------------------------------------
@@ -230,6 +283,7 @@ void print_usage(FILE* stream, int exit_code) {
   fprintf(stream, "Options:\n");
   fprintf(stream, "  -h, --help  display this help and exit.\n");
   fprintf(stream, "  -p, --port  port (default %d)\n", _DEFAULT_PORT);
+  fprintf(stream, "  -d, --debug print debug output\n");
   exit(exit_code);
 }
 //! ----------------------------------------------------------------------------
@@ -248,13 +302,14 @@ int main(int argc, char** argv) {
   static struct option long_opt[] = {
     { "help",   no_argument,       0, 'h' },
     { "port",   required_argument, 0, 'p' },
+    { "debug",  no_argument,       0, 'd' },
     // Sentinel
     { 0,        0,                 0,  0  }
   };
   // -------------------------------------------------------
   // args...
   // -------------------------------------------------------
-  const char short_arg_list[] = "hp:";
+  const char short_arg_list[] = "hp:d";
   while(((unsigned char)opt != 255)) {
     opt = getopt_long_only(argc,
       argv,
@@ -268,6 +323,10 @@ int main(int argc, char** argv) {
     }
     case 'p': {
       port = (uint16_t)(atoi(optarg));
+      break;
+    }
+    case 'd': {
+      s_debug = 1;
       break;
     }
     case '?': {
@@ -297,6 +356,8 @@ int main(int argc, char** argv) {
   } } while(0)
   _SET_SOCK_OPT(listen_fd, SOL_SOCKET, SO_REUSEADDR, 1);
   _SET_SOCK_OPT(listen_fd, SOL_SOCKET, SO_REUSEPORT, 1);
+  // requires setcap
+  //_SET_SOCK_OPT(listen_fd, SOL_SOCKET, SO_ZEROCOPY, 1);
   // -------------------------------------------------------
   // Construct local address structure
   // -------------------------------------------------------
@@ -363,12 +424,12 @@ int main(int argc, char** argv) {
     // -----------------------------------------------------
     // if accept event
     // -----------------------------------------------------
-    //TRACE("[TYPE: %d  RESULT: %d]\n", io->type, res);
     switch(io->type) {
     // -----------------------------------------------------
     // ACCEPT
     // -----------------------------------------------------
     case HGX_IO_TYPE_ACCEPT: {
+      TRACE("accept(%d)\n", res);
       // ---------------------------------------------------
       // check for error
       // ---------------------------------------------------
@@ -380,11 +441,6 @@ int main(int argc, char** argv) {
       // ---------------------------------------------------
       // get rqst obj
       // ---------------------------------------------------
-      //hgx_io_accept_t* rqst = (hgx_io_accept_t*)(cqe->user_data);
-      //TRACE("connect(%d) from %s:%d\n",
-      //  res,
-      //  inet_ntoa(rqst->sa.sin_addr),
-      //  ntohs(rqst->sa.sin_port));
       hgx_conn_t* conn = (hgx_conn_t*)calloc(sizeof(hgx_conn_t), 1);
       _reset_conn(conn);
       conn->fd = res;
@@ -419,10 +475,10 @@ resubmit_accept:
     // OPEN
     // -----------------------------------------------------
     case HGX_IO_TYPE_STATX: {
+      TRACE("statx(%d)\n", res);
       // ---------------------------------------------------
       // check for error
       // ---------------------------------------------------
-      //TRACE("statx(%d)\n", res);
       hgx_io_statx_t* rqst = (hgx_io_statx_t*)(cqe->user_data);
       if (res < 0) {
         ERROR("error statx() failed. Reason[%d]: %s\n",
@@ -455,14 +511,13 @@ resubmit_accept:
     // OPEN
     // -----------------------------------------------------
     case HGX_IO_TYPE_OPEN: {
+      TRACE("open(%d)\n", res);
       // ---------------------------------------------------
       // check for error
       // ---------------------------------------------------
-      //TRACE("open(%d)\n", res);
       hgx_io_open_t* rqst = (hgx_io_open_t*)(cqe->user_data);
-      //TRACE("rqst: %p\n", rqst);
       if (res < 0) {
-        ERROR("error accept() failed. Reason[%d]: %s\n",
+        ERROR("error open() failed. Reason[%d]: %s\n",
           -res, strerror(-res));
         free(rqst);
         // TODO _shutdown_conn routine...(submit close)
@@ -493,57 +548,75 @@ resubmit_accept:
         io_send->io.fd,
         conn->resp,
         conn->resp_len,
-        0);
+        MSG_MORE);
       // link send with subsequent splice submissions
       sqe->flags |= IOSQE_IO_LINK;
       io_uring_sqe_set_data(sqe, io_send);
       io_uring_submit(&ring);
       // ---------------------------------------------------
-      // submit splice
-      // ---------------------------------------------------
-      // TODO
+      // pipe
       // - pipe2 (can't use io_uring)
-      // - splice
-#if 0
-      // splice file data to pipe
-      io_uring_push_splice((struct io_uring *)conn->svr->ring,
-        res.file_fd,
-        0,
-        conn->svr->pipefds[1],
-        -1,
-        res.file_sz,
-        (void *)conn,
-        IOSQE_IO_LINK);
-
-      // splice pipe to client conn
-      io_uring_push_splice((struct io_uring *)conn->svr->ring,
-        conn->svr->pipefds[0],
-        -1,
+      // ---------------------------------------------------
+      if (pipe(conn->pipe_fd) != 0) {
+        ERROR("error pipe() failed. Reason[%d]: %s\n",
+          errno, strerror(errno));
+        free(rqst);
+        _shutdown_conn(&ring, conn);
+        break;
+      }
+      loff_t off_in = 0;
+      loff_t off_out = 0;
+      // ---------------------------------------------------
+      // submit splice: file->pipe[1]
+      // ---------------------------------------------------
+      hgx_io_splice_t* io_splice1 = _new_io_splice(conn);
+      off_in = 0;
+      off_out = -1;
+      sqe = io_uring_get_sqe(&ring);
+      sqe->opcode = IORING_OP_SPLICE;
+      io_uring_prep_splice(sqe,
+        conn->file_fd,
+        off_in,
+        conn->pipe_fd[1],
+        off_out,
+        conn->file_size,
+        SPLICE_F_MOVE);
+      // link send with subsequent splice submissions
+      sqe->flags |= IOSQE_IO_LINK;
+      io_uring_sqe_set_data(sqe, io_splice1);
+      io_uring_submit(&ring);
+      // ---------------------------------------------------
+      // submit splice: pipe[0]->client_fd
+      // ---------------------------------------------------
+      hgx_io_splice_t* io_splice2 = _new_io_splice(conn);
+      off_in = -1;
+      off_out = -1;
+      sqe = io_uring_get_sqe(&ring);
+      sqe->opcode = IORING_OP_SPLICE;
+      io_uring_prep_splice(sqe,
+        conn->pipe_fd[0],
+        off_in,
         conn->fd,
-        -1,
-        res.file_sz,
-        (void *)conn,
-        0);
-#endif
+        off_out,
+        conn->file_size,
+        SPLICE_F_MOVE);
+      io_uring_sqe_set_data(sqe, io_splice2);
+      io_uring_submit(&ring);
       break;
     }
     // -----------------------------------------------------
     // READ
     // -----------------------------------------------------
     case HGX_IO_TYPE_READ: {
+      TRACE("read(%d)\n", res);
       hgx_io_read_t* rqst = (hgx_io_read_t*)(cqe->user_data);
       hgx_conn_t* conn = rqst->conn;
-      //TRACE("read(%d) from fd: %d\n", res, rqst->io.fd);
       // ---------------------------------------------------
       // check for error
       // ---------------------------------------------------
       if (res < 0) {
         free(rqst);
-        hgx_io_close_t* io_close = _new_io_close(conn);
-        sqe = io_uring_get_sqe(&ring);
-        io_uring_prep_close(sqe, io_close->io.fd);
-        io_uring_sqe_set_data(sqe, io_close);
-        io_uring_submit(&ring);
+        _shutdown_conn(&ring, conn);
         break;
       }
       // ---------------------------------------------------
@@ -551,11 +624,7 @@ resubmit_accept:
       // ---------------------------------------------------
       else if (res == 0) {
         free(rqst);
-        hgx_io_close_t* io_close = _new_io_close(conn);
-        sqe = io_uring_get_sqe(&ring);
-        io_uring_prep_close(sqe, io_close->io.fd);
-        io_uring_sqe_set_data(sqe, io_close);
-        io_uring_submit(&ring);
+        _shutdown_conn(&ring, conn);
         break;
       }
       //mem_display(rqst->buf, (size_t)res);
@@ -567,15 +636,10 @@ resubmit_accept:
         ERROR("error http_parser_execute(). Reason: %s: %s\n",
           http_errno_name((enum http_errno)conn->hp.http_errno),
           http_errno_description((enum http_errno)conn->hp.http_errno));
-        hgx_io_close_t* io_close = _new_io_close(conn);
-        sqe = io_uring_get_sqe(&ring);
-        io_uring_prep_close(sqe, io_close->io.fd);
-        io_uring_sqe_set_data(sqe, io_close);
-        io_uring_submit(&ring);
+        free(rqst);
+        _shutdown_conn(&ring, conn);
         break;
       }
-      //TRACE("path: %s\n", conn->path);
-      //TRACE("ext:  %s\n", mime_type(conn->path, conn->path_len));
       // ---------------------------------------------------
       // submit stat rqst to get file size
       // ---------------------------------------------------
@@ -604,32 +668,51 @@ resubmit_accept:
       break;
     }
     // -----------------------------------------------------
-    // WRITE
+    // SEND
     // -----------------------------------------------------
     case HGX_IO_TYPE_SEND: {
+      TRACE("send(%d)\n", res);
       // ---------------------------------------------------
       // check for error
       // ---------------------------------------------------
+      hgx_io_send_t* rqst = (hgx_io_send_t*)(cqe->user_data);
+      hgx_conn_t* conn = rqst->conn;
       if (res < 0) {
-        // TODO free send request???
-#if 0
-        hgx_io_close_t* io_close = _new_io_close(fd);
-        sqe = io_uring_get_sqe(&ring);
-        io_uring_prep_close(sqe, io_close->io.fd);
-        io_uring_sqe_set_data(sqe, io_close);
-        io_uring_submit(&ring);
-#endif
+        ERROR("error send() failed. Reason[%d]: %s\n",
+          -res, strerror(-res));
+        free(rqst);
+        _shutdown_conn(&ring, conn);
         break;
       }
-      // TODO free send request???
+      free(rqst);
+      break;
+    }
+    // -----------------------------------------------------
+    // SEND
+    // -----------------------------------------------------
+    case HGX_IO_TYPE_SPLICE: {
+      TRACE("splice(%d)\n", res);
+      // ---------------------------------------------------
+      // check for error
+      // ---------------------------------------------------
+      hgx_io_splice_t* rqst = (hgx_io_splice_t*)(cqe->user_data);
+      hgx_conn_t* conn = rqst->conn;
+      if (res < 0) {
+        ERROR("error splice() failed. Reason[%d]: %s\n",
+          -res, strerror(-res));
+        free(rqst);
+        _shutdown_conn(&ring, conn);
+        break;
+      }
+      free(rqst);
       break;
     }
     // -----------------------------------------------------
     // CLOSE
     // -----------------------------------------------------
     case HGX_IO_TYPE_CLOSE: {
+      TRACE("close(%d)\n", res);
       hgx_io_close_t* rqst = (hgx_io_close_t*)(cqe->user_data);
-      _delete_conn(rqst->conn);
       free(rqst);
       break;
     }
@@ -637,10 +720,13 @@ resubmit_accept:
     // default
     // -----------------------------------------------------
     default: {
+      TRACE("\?\?\?(%d)\n", res);
       break;
     }
     }
+    // -----------------------------------------------------
     // mark entry as seen -return for reuse in ring buffer
+    // -----------------------------------------------------
     io_uring_cqe_seen(&ring, cqe);
   }
   FATAL("error io_uring_wait_cqe() failed. Reason[%d]: %s\n",

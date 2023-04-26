@@ -1,11 +1,12 @@
 CC = gcc
 #CC = clang
-CFLAGS = -Werror -Wall -g -O2
-#CFLAGS = -Wall -Werror -O0 -ggdb -fsanitize=address
+#CFLAGS = -Werror -Wall -g -O2
+CFLAGS = -Wall -Werror -O0 -ggdb -fsanitize=address
 INCLUDES = -I./
 LFLAGS = -L./
-#DEBUG_LIBS = -lasan
-LIBS = -luring -ltcmalloc
+DEBUG_LIBS = -lasan
+#LIBS = -luring -ltcmalloc
+LIBS = -luring
 SRCS = ndebug.c ext/http-parser/http_parser.c mime.c date.c
 OBJS = $(SRCS:.c=.o)
 
