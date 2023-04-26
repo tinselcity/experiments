@@ -19,6 +19,7 @@
 #include "ndebug.h"
 #include "ext/http-parser/http_parser.h"
 #include "mime.h"
+#include "date.h"
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
@@ -477,12 +478,13 @@ resubmit_accept:
         sizeof(conn->resp)-1,
         "HTTP/1.0 200 OK\r\n"
         "Server: %s\r\n"
-        "Date: Wed, 19 Apr 2023 20:33:38 GMT\r\n"
+        "Date: %s\r\n"
         "Content-Type: %s\r\n"
         "Content-Length: %lu\r\n"
         "Connection: close\r\n"
         "\r\n",
-        "hignx/0.0.0 (Ubuntu)",
+        "hignx/0.0.0",
+        get_date_str(),
         mime_type(conn->path, conn->path_len),
         conn->file_size);
       hgx_io_send_t* io_send = _new_io_send(conn);

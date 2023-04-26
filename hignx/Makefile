@@ -6,7 +6,7 @@ INCLUDES = -I./
 LFLAGS = -L./
 #DEBUG_LIBS = -lasan
 LIBS = -luring -ltcmalloc
-SRCS = ndebug.c ext/http-parser/http_parser.c mime.c
+SRCS = ndebug.c ext/http-parser/http_parser.c mime.c date.c
 OBJS = $(SRCS:.c=.o)
 
 .PHONY: depend clean
