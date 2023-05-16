@@ -5,7 +5,7 @@ A SOCKS(v5) proxy toy using Linux [`splice(7)`](https://man7.org/linux/man-pages
 
 if [`SO_ZEROCOPY`](https://www.kernel.org/doc/html/v4.15/networking/msg_zerocopy.html) is enabled, `splice`-ing  could be an efficient way to do pass-thru proxies, and using `tee` one could pick off the data efficiently for local file/content cache'ing.
 
-In practive, however most proxies are using some form of "end-to-end" encryption, where client terminates to the proxy one way (in PKI using the proxy server certificate), and to the upstream server with another (using the upstream server certificate).
+In practice, however most proxies are using some form of "end-to-end" encryption, where client terminates to the proxy one way (in PKI using the proxy server certificate), and to the upstream server with another (using the upstream server certificate).
 
 ![tee_splice_cut](https://user-images.githubusercontent.com/3515625/220281704-67f681ba-2128-45ab-830e-61a44745c14f.gif)
 
