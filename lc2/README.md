@@ -7,7 +7,7 @@
 
 | Name | Type  | Solve |
 | ---- | ---- | ----- |
-| Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [TODO](TODO) |
+| Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](/lc2/two_sum.py) |
 | Array | [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | [TODO](TODO) |
 | Array | [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | [TODO](TODO) |
 | Array | [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | [TODO](TODO) |
