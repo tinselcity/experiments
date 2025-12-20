@@ -67,7 +67,7 @@
 | String | [Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/) | [TODO](TODO) |
 | String | [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings/) | [TODO](TODO) |
 | String | [Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings/) | [TODO](TODO) |
-| Tree | [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree/) | [TODO](TODO) |
+| Tree | [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree/) | [Done](/lc2/maximum-depth-of-binary-tree.py) |
 | Tree | [Same Tree](https://leetcode.com/problems/same-tree/) | [TODO](TODO) |
 | Tree | [Invert/Flip Binary Tree](https://leetcode.com/problems/invert-binary-tree/) | [TODO](TODO) |
 | Tree | [Binary Tree Maximum Path Sum](https://leetcode.com/problems/binary-tree-maximum-path-sum/) | [TODO](TODO) |
