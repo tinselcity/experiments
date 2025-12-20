@@ -7,8 +7,8 @@
 
 | Name | Type  | Solve |
 | ---- | ---- | ----- |
-| Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](/lc2/two_sum.py) |
-| Array | [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | [TODO](TODO) |
+| Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](/lc2/two-sum.py) |
+| Array | [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | [Done](/lc2/best-time-to-buy-and-sell-stock.py) |
 | Array | [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | [TODO](TODO) |
 | Array | [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | [TODO](TODO) |
 | Array | [Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) | [TODO](TODO) |
@@ -17,7 +17,7 @@
 | Array | [Search in Rotated Sorted Array](https://leetcode.com/problems/search-in-rotated-sorted-array/) | [TODO](TODO) |
 | Array | [3 Sum](https://leetcode.com/problems/3sum/) | [TODO](TODO) |
 | Array | [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) | [TODO](TODO) |
-| Binary | [Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) | [TODO](TODO) |
+| Binary | [Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) | [Done](/lc2/sum-of-two-integers.py) |
 | Binary | [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) | [TODO](TODO) |
 | Binary | [Counting Bits](https://leetcode.com/problems/counting-bits/) | [TODO](TODO) |
 | Binary | [Missing Number](https://leetcode.com/problems/missing-number/) | [TODO](TODO) |
