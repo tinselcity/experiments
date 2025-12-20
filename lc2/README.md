@@ -81,6 +81,6 @@
 | Tree | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree/) | [TODO](TODO) |
 | Tree | [Add and Search Word](https://leetcode.com/problems/add-and-search-word-data-structure-design/) | [TODO](TODO) |
 | Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [TODO](TODO) |
-| Heap | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [TODO](TODO) |
+| Heap | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [Done](/lc2/merge-k-sorted-lists.py) |
 | Heap | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | [TODO](TODO) |
 | Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [TODO](TODO) |
