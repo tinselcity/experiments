@@ -22,7 +22,7 @@
 | Binary | [Counting Bits](https://leetcode.com/problems/counting-bits/) | [TODO](TODO) |
 | Binary | [Missing Number](https://leetcode.com/problems/missing-number/) | [TODO](TODO) |
 | Binary | [Reverse Bits](https://leetcode.com/problems/reverse-bits/) | [TODO](TODO) |
-| Dynamic Programming | [Climbing Stairs](https://leetcode.com/problems/climbing-stairs/) | [TODO](TODO) |
+| Dynamic Programming | [Climbing Stairs](https://leetcode.com/problems/climbing-stairs/) | [Done](/lc2/climbing-stairs.py) |
 | Dynamic Programming | [Coin Change](https://leetcode.com/problems/coin-change/) | [TODO](TODO) |
 | Dynamic Programming | [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) | [TODO](TODO) |
 | Dynamic Programming | [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) | [TODO](TODO) |
