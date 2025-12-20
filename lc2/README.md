@@ -50,7 +50,7 @@
 | Linked List | [Reverse a Linked List](https://leetcode.com/problems/reverse-linked-list/) | [TODO](TODO) |
 | Linked List | [Detect Cycle in a Linked List](https://leetcode.com/problems/linked-list-cycle/) | [TODO](TODO) |
 | Linked List | [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) | [TODO](TODO) |
-| Linked List | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [TODO](TODO) |
+| Linked List | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [Done](/lc2/merge-k-sorted-lists.py) |
 | Linked List | [Remove Nth Node From End Of List](https://leetcode.com/problems/remove-nth-node-from-end-of-list/) | [TODO](TODO) |
 | Linked List | [Reorder List](https://leetcode.com/problems/reorder-list/) | [TODO](TODO) |
 | Matrix | [Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/) | [TODO](TODO) |
@@ -81,6 +81,5 @@
 | Tree | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree/) | [TODO](TODO) |
 | Tree | [Add and Search Word](https://leetcode.com/problems/add-and-search-word-data-structure-design/) | [TODO](TODO) |
 | Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [TODO](TODO) |
-| Heap | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [Done](/lc2/merge-k-sorted-lists.py) |
 | Heap | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | [TODO](TODO) |
 | Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [TODO](TODO) |
