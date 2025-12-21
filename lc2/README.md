@@ -5,6 +5,7 @@
 
 #### Problems
 
+
 | Name | Type  | Solve |
 | ---- | ---- | ----- |
 | Array | [Two Sum](https://leetcode.com/problems/two-sum/) | [Done](/lc2/two-sum.py) |
@@ -49,7 +50,7 @@
 | Interval | [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) | [TODO](TODO) |
 | Linked List | [Reverse a Linked List](https://leetcode.com/problems/reverse-linked-list/) | [TODO](TODO) |
 | Linked List | [Detect Cycle in a Linked List](https://leetcode.com/problems/linked-list-cycle/) | [TODO](TODO) |
-| Linked List | [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) | [TODO](TODO) |
+| Linked List | [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) | [Done](/lc2/merge-two-sorted-lists.py) |
 | Linked List | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [Done](/lc2/merge-k-sorted-lists.py) |
 | Linked List | [Remove Nth Node From End Of List](https://leetcode.com/problems/remove-nth-node-from-end-of-list/) | [TODO](TODO) |
 | Linked List | [Reorder List](https://leetcode.com/problems/reorder-list/) | [TODO](TODO) |
