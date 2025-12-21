@@ -54,14 +54,14 @@
 | Linked List | [Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) | [Done](/lc2/merge-k-sorted-lists.py) |
 | Linked List | [Remove Nth Node From End Of List](https://leetcode.com/problems/remove-nth-node-from-end-of-list/) | [TODO](TODO) |
 | Linked List | [Reorder List](https://leetcode.com/problems/reorder-list/) | [TODO](TODO) |
-| Matrix | [Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/) | [TODO](TODO) |
+| Matrix | [Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/) | [Done](/lc2/set-matrix-zeroes.py) |
 | Matrix | [Spiral Matrix](https://leetcode.com/problems/spiral-matrix/) | [TODO](TODO) |
 | Matrix | [Rotate Image](https://leetcode.com/problems/rotate-image/) | [TODO](TODO) |
 | Matrix | [Word Search](https://leetcode.com/problems/word-search/) | [TODO](TODO) |
 | String | [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/) | [TODO](TODO) |
 | String | [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement/) | [TODO](TODO) |
-| String | [Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/) | [TODO](TODO) |
-| String | [Valid Anagram](https://leetcode.com/problems/valid-anagram/) | [TODO](TODO) |
+| String | [Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/) | [Done](/lc2/minimum-window-substring.py) |
+| String | [Valid Anagram](https://leetcode.com/problems/valid-anagram/) | [Done](/lc2/valid-anagram.py) |
 | String | [Group Anagrams](https://leetcode.com/problems/group-anagrams/) | [TODO](TODO) |
 | String | [Valid Parentheses](https://leetcode.com/problems/valid-parentheses/) | [TODO](TODO) |
 | String | [Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) | [TODO](TODO) |
@@ -83,4 +83,4 @@
 | Tree | [Add and Search Word](https://leetcode.com/problems/add-and-search-word-data-structure-design/) | [TODO](TODO) |
 | Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [TODO](TODO) |
 | Heap | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | [TODO](TODO) |
-| Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [TODO](TODO) |
+| Heap | [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) | [Done](/lc2/find-median-from-data-stream.py) |
