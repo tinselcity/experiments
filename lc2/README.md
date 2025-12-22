@@ -79,7 +79,7 @@
 | Tree | [Validate Binary Search Tree](https://leetcode.com/problems/validate-binary-search-tree/) | [TODO](TODO) |
 | Tree | [Kth Smallest Element in a BST](https://leetcode.com/problems/kth-smallest-element-in-a-bst/) | [TODO](TODO) |
 | Tree | [Lowest Common Ancestor of BST](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/) | [TODO](TODO) |
-| Tree | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree/) | [TODO](TODO) |
+| Tree | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree/) | [Done](/lc2/implement-trie-prefix-tree.py) |
 | Tree | [Add and Search Word](https://leetcode.com/problems/add-and-search-word-data-structure-design/) | [TODO](TODO) |
 | Tree | [Word Search II](https://leetcode.com/problems/word-search-ii/) | [TODO](TODO) |
 | Heap | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | [TODO](TODO) |
